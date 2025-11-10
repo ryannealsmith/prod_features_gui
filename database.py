@@ -157,14 +157,58 @@ class Database:
         
         if filters:
             if filters.get('platform'):
-                query += ' AND platform = ?'
-                params.append(filters['platform'])
+                # Hierarchical: Terberg-1.3 includes 1.2, 1.1, 1
+                platform = filters['platform']
+                if platform.startswith('Terberg-'):
+                    # Extract versions: Terberg-1.3 includes Terberg-1.2, Terberg-1.1, Terberg-1
+                    base = platform.split('-')[1]  # e.g., "1.3"
+                    parts = base.split('.')
+                    included = ['Terberg-' + parts[0]]  # Base version (Terberg-1)
+                    
+                    # Add intermediate versions
+                    if len(parts) > 1:
+                        for i in range(1, int(parts[1]) + 1):
+                            included.append(f'Terberg-{parts[0]}.{i}')
+                    
+                    query += ' AND platform IN ({})'.format(','.join('?' * len(included)))
+                    params.extend(included)
+                else:
+                    query += ' AND platform = ?'
+                    params.append(platform)
+                    
             if filters.get('odd'):
-                query += ' AND odd = ?'
-                params.append(filters['odd'])
+                # Hierarchical: CFG-ODD-2 > CFG-ODD-1.1 > CFG-ODD-1
+                odd = filters['odd']
+                if odd.startswith('CFG-ODD-'):
+                    version = odd.replace('CFG-ODD-', '')
+                    included = ['CFG-ODD-1']  # Always include base
+                    
+                    if version == '1.1' or version == '2':
+                        included.append('CFG-ODD-1.1')
+                    if version == '2':
+                        included.append('CFG-ODD-2')
+                    elif '.' in version:
+                        included.append(odd)
+                    
+                    query += ' AND odd IN ({})'.format(','.join('?' * len(included)))
+                    params.extend(included)
+                else:
+                    query += ' AND odd = ?'
+                    params.append(odd)
+                    
             if filters.get('environment'):
-                query += ' AND environment = ?'
-                params.append(filters['environment'])
+                # CFG-ENV-2.1 includes CFG-ENV-1.1, so show both
+                env = filters['environment']
+                if env == 'CFG-ENV-2.1':
+                    query += ' AND (environment = ? OR environment = ?)'
+                    params.append('CFG-ENV-2.1')
+                    params.append('CFG-ENV-1.1')
+                else:
+                    query += ' AND environment = ?'
+                    params.append(env)
+            if filters.get('trailer'):
+                query += ' AND trailer = ?'
+                params.append(filters['trailer'])
                 
         query += ' ORDER BY label'
         cursor.execute(query, params)
@@ -230,11 +274,62 @@ class Database:
         
         if filters:
             if filters.get('platform'):
-                query += ' AND platform = ?'
-                params.append(filters['platform'])
+                # Hierarchical: Terberg-1.3 includes 1.2, 1.1, 1
+                platform = filters['platform']
+                if platform.startswith('Terberg-'):
+                    # Extract versions: Terberg-1.3 includes Terberg-1.2, Terberg-1.1, Terberg-1
+                    base = platform.split('-')[1]  # e.g., "1.3"
+                    parts = base.split('.')
+                    included = ['Terberg-' + parts[0]]  # Base version (Terberg-1)
+                    
+                    # Add intermediate versions
+                    if len(parts) > 1:
+                        for i in range(1, int(parts[1]) + 1):
+                            included.append(f'Terberg-{parts[0]}.{i}')
+                    
+                    query += ' AND platform IN ({})'.format(','.join('?' * len(included)))
+                    params.extend(included)
+                else:
+                    query += ' AND platform = ?'
+                    params.append(platform)
+                    
             if filters.get('swimlane'):
                 query += ' AND swimlane = ?'
                 params.append(filters['swimlane'])
+                
+            if filters.get('odd'):
+                # Hierarchical: CFG-ODD-2 > CFG-ODD-1.1 > CFG-ODD-1
+                odd = filters['odd']
+                if odd.startswith('CFG-ODD-'):
+                    version = odd.replace('CFG-ODD-', '')
+                    included = ['CFG-ODD-1']  # Always include base
+                    
+                    if version == '1.1' or version == '2':
+                        included.append('CFG-ODD-1.1')
+                    if version == '2':
+                        included.append('CFG-ODD-2')
+                    elif '.' in version:
+                        included.append(odd)
+                    
+                    query += ' AND odd IN ({})'.format(','.join('?' * len(included)))
+                    params.extend(included)
+                else:
+                    query += ' AND odd = ?'
+                    params.append(odd)
+                    
+            if filters.get('environment'):
+                # CFG-ENV-2.1 includes CFG-ENV-1.1, so show both
+                env = filters['environment']
+                if env == 'CFG-ENV-2.1':
+                    query += ' AND (environment = ? OR environment = ?)'
+                    params.append('CFG-ENV-2.1')
+                    params.append('CFG-ENV-1.1')
+                else:
+                    query += ' AND environment = ?'
+                    params.append(env)
+            if filters.get('trailer'):
+                query += ' AND trailer = ?'
+                params.append(filters['trailer'])
                 
         query += ' ORDER BY label'
         cursor.execute(query, params)

@@ -2,13 +2,14 @@
 Main GUI application for Product Features management.
 """
 import tkinter as tk
-from tkinter import ttk, messagebox, scrolledtext
+from tkinter import ttk, messagebox, scrolledtext, filedialog
 from database import Database
-from datetime import datetime
+from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import matplotlib.dates as mdates
+import json
 
 class ProductFeaturesApp:
     def __init__(self, root):
@@ -18,6 +19,17 @@ class ProductFeaturesApp:
         
         self.db = Database()
         self.db.connect()
+        
+        # Create menu bar
+        menubar = tk.Menu(root)
+        root.config(menu=menubar)
+        
+        # File menu
+        file_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="File", menu=file_menu)
+        file_menu.add_command(label="Export to JSON", command=self.export_to_json)
+        file_menu.add_separator()
+        file_menu.add_command(label="Exit", command=root.quit)
         
         # Create notebook (tabbed interface)
         self.notebook = ttk.Notebook(root)
@@ -378,9 +390,15 @@ class ProductFeaturesApp:
         self.rm_environment = ttk.Combobox(filter_frame, state='readonly', width=25)
         self.rm_environment.grid(row=row, column=1, sticky=tk.W, padx=5, pady=3)
         
-        ttk.Label(filter_frame, text="Swimlane:").grid(row=row, column=2, sticky=tk.W, padx=5, pady=3)
-        self.rm_swimlane = ttk.Combobox(filter_frame, state='readonly', width=25)
-        self.rm_swimlane.grid(row=row, column=3, sticky=tk.W, padx=5, pady=3)
+        ttk.Label(filter_frame, text="Trailer:").grid(row=row, column=2, sticky=tk.W, padx=5, pady=3)
+        self.rm_trailer = ttk.Combobox(filter_frame, state='readonly', width=25)
+        self.rm_trailer.grid(row=row, column=3, sticky=tk.W, padx=5, pady=3)
+        row += 1
+        
+        ttk.Label(filter_frame, text="Query Date:").grid(row=row, column=0, sticky=tk.W, padx=5, pady=3)
+        self.rm_date = ttk.Entry(filter_frame, width=27)
+        self.rm_date.grid(row=row, column=1, sticky=tk.W, padx=5, pady=3)
+        ttk.Label(filter_frame, text="(YYYY-MM-DD)", font=('TkDefaultFont', 8, 'italic')).grid(row=row, column=1, sticky=tk.E, padx=5, pady=3)
         row += 1
         
         btn_frame = ttk.Frame(filter_frame)
@@ -397,8 +415,16 @@ class ProductFeaturesApp:
         results_frame = ttk.LabelFrame(tab, text="Query Results", padding=10)
         results_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         
+        # Create horizontal split - left for tables, right for pie chart
+        results_paned = ttk.PanedWindow(results_frame, orient=tk.HORIZONTAL)
+        results_paned.pack(fill=tk.BOTH, expand=True)
+        
+        # Left side - tables
+        tables_frame = ttk.Frame(results_paned)
+        results_paned.add(tables_frame, weight=2)
+        
         # Create notebook for different result views
-        results_notebook = ttk.Notebook(results_frame)
+        results_notebook = ttk.Notebook(tables_frame)
         results_notebook.pack(fill=tk.BOTH, expand=True)
         
         # Product Features results
@@ -409,15 +435,23 @@ class ProductFeaturesApp:
         pf_scroll.pack(side=tk.RIGHT, fill=tk.Y)
         
         self.rm_pf_tree = ttk.Treeview(pf_tab,
-                                        columns=('Label', 'Name', 'Platform', 'TRL3', 'TRL6', 'TRL9'),
-                                        show='tree headings',
+                                        columns=('Label', 'Name', 'Description', 'Required', 'TRL Achieved'),
+                                        show='headings',
                                         yscrollcommand=pf_scroll.set)
         pf_scroll.config(command=self.rm_pf_tree.yview)
         
-        for col in ('Label', 'Name', 'Platform', 'TRL3', 'TRL6', 'TRL9'):
-            self.rm_pf_tree.heading(col, text=col)
+        self.rm_pf_tree.heading('Label', text='Label')
+        self.rm_pf_tree.heading('Name', text='Name')
+        self.rm_pf_tree.heading('Description', text='Description')
+        self.rm_pf_tree.heading('Required', text='Required')
+        self.rm_pf_tree.heading('TRL Achieved', text='TRL Achieved')
         
-        self.rm_pf_tree.column('#0', width=0, stretch=False)
+        self.rm_pf_tree.column('Label', width=120)
+        self.rm_pf_tree.column('Name', width=200)
+        self.rm_pf_tree.column('Description', width=300)
+        self.rm_pf_tree.column('Required', width=80)
+        self.rm_pf_tree.column('TRL Achieved', width=120)
+        
         self.rm_pf_tree.pack(fill=tk.BOTH, expand=True)
         
         # Capabilities results
@@ -428,16 +462,42 @@ class ProductFeaturesApp:
         cap_scroll.pack(side=tk.RIGHT, fill=tk.Y)
         
         self.rm_cap_tree = ttk.Treeview(cap_tab,
-                                         columns=('Label', 'Name', 'Swimlane', 'TRL3', 'TRL6', 'TRL9'),
-                                         show='tree headings',
+                                         columns=('Label', 'Name', 'Description', 'Required', 'TRL Achieved'),
+                                         show='headings',
                                          yscrollcommand=cap_scroll.set)
         cap_scroll.config(command=self.rm_cap_tree.yview)
         
-        for col in ('Label', 'Name', 'Swimlane', 'TRL3', 'TRL6', 'TRL9'):
-            self.rm_cap_tree.heading(col, text=col)
+        self.rm_cap_tree.heading('Label', text='Label')
+        self.rm_cap_tree.heading('Name', text='Name')
+        self.rm_cap_tree.heading('Description', text='Description')
+        self.rm_cap_tree.heading('Required', text='Required')
+        self.rm_cap_tree.heading('TRL Achieved', text='TRL Achieved')
         
-        self.rm_cap_tree.column('#0', width=0, stretch=False)
+        self.rm_cap_tree.column('Label', width=120)
+        self.rm_cap_tree.column('Name', width=200)
+        self.rm_cap_tree.column('Description', width=300)
+        self.rm_cap_tree.column('Required', width=80)
+        self.rm_cap_tree.column('TRL Achieved', width=120)
+        
         self.rm_cap_tree.pack(fill=tk.BOTH, expand=True)
+        
+        # Right side - pie chart
+        chart_frame = ttk.LabelFrame(results_paned, text="TRL Distribution", padding=5)
+        results_paned.add(chart_frame, weight=1)
+        
+        self.rm_chart_frame = ttk.Frame(chart_frame)
+        self.rm_chart_frame.pack(fill=tk.BOTH, expand=True)
+        
+        # Store the results notebook for later reference
+        self.rm_results_notebook = results_notebook
+        
+        # Store query results for pie chart updates
+        self.rm_last_pfs = []
+        self.rm_last_caps = []
+        self.rm_last_query_date = None
+        
+        # Bind tab change to update pie chart
+        results_notebook.bind('<<NotebookTabChanged>>', self.on_rm_tab_changed)
         
         self.load_readiness_filters()
     
@@ -452,22 +512,47 @@ class ProductFeaturesApp:
         
         ttk.Label(control_frame, text="View:").pack(side=tk.LEFT, padx=5)
         self.roadmap_view = ttk.Combobox(control_frame, 
-                                         values=['Product Features', 'Capabilities', 'Both'],
+                                         values=['Product Features', 'Capabilities'],
                                          state='readonly',
                                          width=20)
         self.roadmap_view.set('Product Features')
         self.roadmap_view.pack(side=tk.LEFT, padx=5)
         
+        # Add filter controls
+        ttk.Label(control_frame, text="Platform:").pack(side=tk.LEFT, padx=(20, 5))
+        self.roadmap_platform = ttk.Combobox(control_frame, width=15)
+        self.roadmap_platform.pack(side=tk.LEFT, padx=5)
+        
+        ttk.Label(control_frame, text="ODD:").pack(side=tk.LEFT, padx=(10, 5))
+        self.roadmap_odd = ttk.Combobox(control_frame, width=15)
+        self.roadmap_odd.pack(side=tk.LEFT, padx=5)
+        
+        ttk.Label(control_frame, text="Environment:").pack(side=tk.LEFT, padx=(10, 5))
+        self.roadmap_environment = ttk.Combobox(control_frame, width=15)
+        self.roadmap_environment.pack(side=tk.LEFT, padx=5)
+        
         ttk.Button(control_frame, text="Update Roadmap",
-                  command=self.update_roadmap).pack(side=tk.LEFT, padx=5)
+                  command=self.update_roadmap).pack(side=tk.LEFT, padx=20)
         
         # Canvas for matplotlib
         self.roadmap_frame = ttk.Frame(tab)
         self.roadmap_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         
+        # Load filter options
+        self.load_roadmap_filters()
         self.update_roadmap()
     
     # Data loading methods
+    def load_roadmap_filters(self):
+        """Load filter options for Roadmap."""
+        platforms = [''] + self.db.get_unique_values('product_features', 'platform')
+        odds = [''] + self.db.get_unique_values('product_features', 'odd')
+        environments = [''] + self.db.get_unique_values('product_features', 'environment')
+        
+        self.roadmap_platform['values'] = platforms
+        self.roadmap_odd['values'] = odds
+        self.roadmap_environment['values'] = environments
+    
     def load_pf_filters(self):
         """Load filter options for Product Features."""
         platforms = [''] + self.db.get_unique_values('product_features', 'platform')
@@ -920,24 +1005,37 @@ class ProductFeaturesApp:
         envs = [''] + self.db.get_unique_values('product_features', 'environment')
         self.rm_environment['values'] = envs
         
-        swimlanes = [''] + self.db.get_unique_values('capabilities', 'swimlane')
-        self.rm_swimlane['values'] = swimlanes
+        trailers = [''] + self.db.get_unique_values('product_features', 'trailer')
+        self.rm_trailer['values'] = trailers
     
     def clear_readiness_filters(self):
         """Clear Readiness Matrix filters."""
         self.rm_platform.set('')
         self.rm_odd.set('')
         self.rm_environment.set('')
-        self.rm_swimlane.set('')
+        self.rm_trailer.set('')
+        self.rm_date.delete(0, tk.END)
         self.apply_readiness_query()
     
     def apply_readiness_query(self):
         """Apply Readiness Matrix query."""
+        from datetime import datetime
+        
         # Clear current results
         for item in self.rm_pf_tree.get_children():
             self.rm_pf_tree.delete(item)
         for item in self.rm_cap_tree.get_children():
             self.rm_cap_tree.delete(item)
+        
+        # Get query date
+        query_date_str = self.rm_date.get().strip()
+        query_date = None
+        if query_date_str:
+            try:
+                query_date = datetime.strptime(query_date_str, '%Y-%m-%d').date()
+            except ValueError:
+                messagebox.showwarning("Invalid Date", "Please enter date in YYYY-MM-DD format")
+                return
         
         # Build filters
         pf_filters = {}
@@ -947,26 +1045,252 @@ class ProductFeaturesApp:
             pf_filters['odd'] = self.rm_odd.get()
         if self.rm_environment.get():
             pf_filters['environment'] = self.rm_environment.get()
+        if self.rm_trailer.get():
+            pf_filters['trailer'] = self.rm_trailer.get()
         
         cap_filters = {}
         if self.rm_platform.get():
             cap_filters['platform'] = self.rm_platform.get()
-        if self.rm_swimlane.get():
-            cap_filters['swimlane'] = self.rm_swimlane.get()
+        if self.rm_odd.get():
+            cap_filters['odd'] = self.rm_odd.get()
+        if self.rm_environment.get():
+            cap_filters['environment'] = self.rm_environment.get()
+        if self.rm_trailer.get():
+            cap_filters['trailer'] = self.rm_trailer.get()
+        
+        # Helper function to calculate TRL achieved
+        def calculate_trl_achieved(trl3_date, trl6_date, trl9_date, query_date):
+            if not query_date:
+                return 'N/A'
+            
+            # Parse dates
+            trl3 = datetime.strptime(trl3_date, '%Y-%m-%d').date() if trl3_date else None
+            trl6 = datetime.strptime(trl6_date, '%Y-%m-%d').date() if trl6_date else None
+            trl9 = datetime.strptime(trl9_date, '%Y-%m-%d').date() if trl9_date else None
+            
+            # Determine TRL achieved by query date
+            if trl9 and query_date >= trl9:
+                return 'TRL 9'
+            elif trl6 and query_date >= trl6:
+                return 'TRL 6'
+            elif trl3 and query_date >= trl3:
+                return 'TRL 3'
+            else:
+                return 'Not Started'
         
         # Load Product Features
         pfs = self.db.get_product_features(pf_filters)
+        print(f"DEBUG: Found {len(pfs)} product features matching filters: {pf_filters}")
+        
         for pf in pfs:
-            self.rm_pf_tree.insert('', tk.END,
-                                   values=(pf['label'], pf['name'], pf['platform'],
-                                          pf['trl3_date'], pf['trl6_date'], pf['trl9_date']))
+            try:
+                trl_achieved = calculate_trl_achieved(
+                    pf.get('trl3_date'), 
+                    pf.get('trl6_date'), 
+                    pf.get('trl9_date'),
+                    query_date
+                )
+                
+                # Determine if required (using when_date field)
+                required = 'Yes' if pf.get('when_date') else 'N/A'
+                
+                # Get description from details field
+                description = pf.get('details', '')[:100] + '...' if pf.get('details') and len(pf.get('details', '')) > 100 else pf.get('details', '')
+                
+                # Add color indicators to text
+                # Required: 🟢 = green (Yes), 🔴 = red (No), ⚪ = grey (N/A)
+                if required == 'Yes':
+                    required_display = '🟢 Yes'
+                elif required == 'No':
+                    required_display = '🔴 No'
+                else:
+                    required_display = '⚪ N/A'
+                
+                # TRL: ⚪ = grey (Not Started), 🔴 = red (TRL 3), 🟠 = amber (TRL 6), 🟢 = green (TRL 9)
+                if trl_achieved == 'TRL 9':
+                    trl_display = '🟢 TRL 9'
+                elif trl_achieved == 'TRL 6':
+                    trl_display = '🟠 TRL 6'
+                elif trl_achieved == 'TRL 3':
+                    trl_display = '🔴 TRL 3'
+                else:
+                    trl_display = '⚪ Not Started'
+                
+                print(f"DEBUG: Inserting PF {pf['label']}: {pf['name'][:30]}")
+                self.rm_pf_tree.insert('', tk.END,
+                                       values=(pf['label'], pf['name'], description, required_display, trl_display))
+            except Exception as e:
+                print(f"Error processing product feature {pf.get('label', 'UNKNOWN')}: {e}")
+                import traceback
+                traceback.print_exc()
+                # Still insert the row with basic info
+                self.rm_pf_tree.insert('', tk.END,
+                                       values=(pf.get('label', '?'), pf.get('name', '?'), 
+                                              pf.get('details', '')[:50] if pf.get('details') else '', 
+                                              'N/A', 'Error'))
+        
+        print(f"DEBUG: Tree now has {len(self.rm_pf_tree.get_children())} items")
         
         # Load Capabilities
+        # Environment filter now handles CFG-ENV-2.1 including CFG-ENV-1.1 at database level
         caps = self.db.get_capabilities(cap_filters)
+        print(f"DEBUG: Found {len(caps)} capabilities matching filters: {cap_filters}")
         for cap in caps:
-            self.rm_cap_tree.insert('', tk.END,
-                                    values=(cap['label'], cap['name'], cap['swimlane'],
-                                           cap['trl3_date'], cap['trl6_date'], cap['trl9_date']))
+            try:
+                trl_achieved = calculate_trl_achieved(
+                    cap.get('trl3_date'), 
+                    cap.get('trl6_date'), 
+                    cap.get('trl9_date'),
+                    query_date
+                )
+                
+                # Determine if required (using when_date field)
+                required = 'Yes' if cap.get('when_date') else 'N/A'
+                
+                # Get description from details field
+                description = cap.get('details', '')[:100] + '...' if cap.get('details') and len(cap.get('details', '')) > 100 else cap.get('details', '')
+                
+                # Add color indicators to text
+                # Required: 🟢 = green (Yes), 🔴 = red (No), ⚪ = grey (N/A)
+                if required == 'Yes':
+                    required_display = '🟢 Yes'
+                elif required == 'No':
+                    required_display = '🔴 No'
+                else:
+                    required_display = '⚪ N/A'
+                
+                # TRL: ⚪ = grey (Not Started), 🔴 = red (TRL 3), 🟠 = amber (TRL 6), 🟢 = green (TRL 9)
+                if trl_achieved == 'TRL 9':
+                    trl_display = '🟢 TRL 9'
+                elif trl_achieved == 'TRL 6':
+                    trl_display = '🟠 TRL 6'
+                elif trl_achieved == 'TRL 3':
+                    trl_display = '🔴 TRL 3'
+                else:
+                    trl_display = '⚪ Not Started'
+                
+                self.rm_cap_tree.insert('', tk.END,
+                                        values=(cap['label'], cap['name'], description, required_display, trl_display))
+            except Exception as e:
+                print(f"Error processing capability {cap.get('label', 'UNKNOWN')}: {e}")
+                # Still insert the row with basic info
+                self.rm_cap_tree.insert('', tk.END,
+                                        values=(cap.get('label', '?'), cap.get('name', '?'), 
+                                               cap.get('details', '')[:50] if cap.get('details') else '', 
+                                               'N/A', 'Error'))
+        
+        # Store results for pie chart updates
+        self.rm_last_pfs = pfs
+        self.rm_last_caps = caps
+        self.rm_last_query_date = query_date
+        
+        # Update pie chart based on current tab
+        self.update_readiness_pie_chart(pfs, caps, query_date)
+    
+    def on_rm_tab_changed(self, event):
+        """Handle readiness matrix tab change to update pie chart."""
+        if hasattr(self, 'rm_last_pfs'):
+            self.update_readiness_pie_chart(
+                self.rm_last_pfs, 
+                self.rm_last_caps, 
+                self.rm_last_query_date
+            )
+    
+    def update_readiness_pie_chart(self, pfs, caps, query_date):
+        """Update the TRL distribution pie chart."""
+        # Clear previous chart
+        for widget in self.rm_chart_frame.winfo_children():
+            widget.destroy()
+        
+        # Get current tab (Product Features or Capabilities)
+        current_tab_index = self.rm_results_notebook.index(self.rm_results_notebook.select())
+        
+        # Helper function to calculate TRL achieved
+        def calculate_trl_achieved(trl3_date, trl6_date, trl9_date, query_date):
+            if not query_date:
+                return 'Not Started'
+            
+            # Parse dates
+            trl3 = datetime.strptime(trl3_date, '%Y-%m-%d').date() if trl3_date else None
+            trl6 = datetime.strptime(trl6_date, '%Y-%m-%d').date() if trl6_date else None
+            trl9 = datetime.strptime(trl9_date, '%Y-%m-%d').date() if trl9_date else None
+            
+            # Determine TRL achieved by query date
+            if trl9 and query_date >= trl9:
+                return 'TRL 9'
+            elif trl6 and query_date >= trl6:
+                return 'TRL 6'
+            elif trl3 and query_date >= trl3:
+                return 'TRL 3'
+            else:
+                return 'Not Started'
+        
+        # Collect TRL data based on current tab
+        trl_counts = {'Not Started': 0, 'TRL 3': 0, 'TRL 6': 0, 'TRL 9': 0}
+        
+        if current_tab_index == 0:  # Product Features tab
+            items = pfs
+            title = "Product Features TRL Distribution"
+        else:  # Capabilities tab
+            items = caps
+            title = "Capabilities TRL Distribution"
+        
+        # Count TRL levels
+        for item in items:
+            trl = calculate_trl_achieved(
+                item.get('trl3_date'),
+                item.get('trl6_date'),
+                item.get('trl9_date'),
+                query_date
+            )
+            trl_counts[trl] += 1
+        
+        # Filter out zero counts
+        labels = []
+        sizes = []
+        colors = []
+        color_map = {
+            'Not Started': '#D3D3D3',  # Grey
+            'TRL 3': '#DC3545',        # Red
+            'TRL 6': '#FFC107',        # Amber
+            'TRL 9': '#28A745'         # Green
+        }
+        
+        for trl_level in ['Not Started', 'TRL 3', 'TRL 6', 'TRL 9']:
+            if trl_counts[trl_level] > 0:
+                labels.append(f'{trl_level}\n({trl_counts[trl_level]})')
+                sizes.append(trl_counts[trl_level])
+                colors.append(color_map[trl_level])
+        
+        if not sizes:
+            # No data to display
+            label = tk.Label(self.rm_chart_frame, text="No data to display", 
+                           font=('TkDefaultFont', 10))
+            label.pack(expand=True)
+            return
+        
+        # Create pie chart
+        fig = Figure(figsize=(5, 5), dpi=80)
+        ax = fig.add_subplot(111)
+        
+        wedges, texts, autotexts = ax.pie(sizes, labels=labels, colors=colors,
+                                           autopct='%1.1f%%', startangle=90,
+                                           textprops={'fontsize': 9})
+        
+        # Make percentage text bold
+        for autotext in autotexts:
+            autotext.set_color('white')
+            autotext.set_fontweight('bold')
+            autotext.set_fontsize(10)
+        
+        ax.set_title(title, fontsize=11, fontweight='bold', pad=10)
+        
+        fig.tight_layout()
+        
+        # Embed in tkinter
+        canvas = FigureCanvasTkAgg(fig, master=self.rm_chart_frame)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
     
     def export_readiness_results(self):
         """Export readiness matrix results to CSV."""
@@ -987,7 +1311,7 @@ class ProductFeaturesApp:
                 
                 # Write Product Features
                 writer.writerow(['Product Features'])
-                writer.writerow(['Label', 'Name', 'Platform', 'TRL3', 'TRL6', 'TRL9'])
+                writer.writerow(['Label', 'Name', 'Description', 'Required', 'TRL Achieved'])
                 
                 for item in self.rm_pf_tree.get_children():
                     values = self.rm_pf_tree.item(item)['values']
@@ -997,7 +1321,7 @@ class ProductFeaturesApp:
                 
                 # Write Capabilities
                 writer.writerow(['Capabilities'])
-                writer.writerow(['Label', 'Name', 'Swimlane', 'TRL3', 'TRL6', 'TRL9'])
+                writer.writerow(['Label', 'Name', 'Description', 'Required', 'TRL Achieved'])
                 
                 for item in self.rm_cap_tree.get_children():
                     values = self.rm_cap_tree.item(item)['values']
@@ -1008,93 +1332,278 @@ class ProductFeaturesApp:
             messagebox.showerror("Error", f"Failed to export: {str(e)}")
     
     def update_roadmap(self):
-        """Update the roadmap visualization."""
+        """Update the roadmap visualization with Gantt-style timeline."""
         # Clear previous plot
         for widget in self.roadmap_frame.winfo_children():
             widget.destroy()
         
-        # Get current filters from readiness matrix if any
-        pf_filters = {}
-        if hasattr(self, 'rm_platform') and self.rm_platform.get():
-            pf_filters['platform'] = self.rm_platform.get()
+        # Get filters
+        filters = {}
+        if hasattr(self, 'roadmap_platform') and self.roadmap_platform.get():
+            filters['platform'] = self.roadmap_platform.get()
+        if hasattr(self, 'roadmap_odd') and self.roadmap_odd.get():
+            filters['odd'] = self.roadmap_odd.get()
+        if hasattr(self, 'roadmap_environment') and self.roadmap_environment.get():
+            filters['environment'] = self.roadmap_environment.get()
         
         # Create figure
-        fig = Figure(figsize=(12, 8), dpi=100)
+        fig = Figure(figsize=(14, 10), dpi=100)
         ax = fig.add_subplot(111)
         
         view = self.roadmap_view.get()
         
-        # Collect items with dates
+        # TRL colors: Red (TRL3), Amber (TRL6), Green (TRL9)
+        trl_colors = {
+            'TRL3': '#DC3545',  # Red
+            'TRL6': '#FFC107',  # Amber
+            'TRL9': '#28A745'   # Green
+        }
+        
+        # Collect items with TRL progression
         items = []
         
-        if view in ['Product Features', 'Both']:
-            pfs = self.db.get_product_features(pf_filters)
+        if view == 'Product Features':
+            pfs = self.db.get_product_features(filters)
             for pf in pfs:
-                for trl, date_field in [('TRL3', 'trl3_date'), ('TRL6', 'trl6_date'), ('TRL9', 'trl9_date')]:
-                    if pf.get(date_field):
-                        try:
-                            date = datetime.strptime(pf[date_field], '%Y-%m-%d')
-                            items.append({
-                                'date': date,
-                                'label': f"{pf['label']} ({trl})",
-                                'type': 'PF',
-                                'color': 'blue'
-                            })
-                        except:
-                            pass
+                # Skip if no dates
+                if not any([pf.get('trl3_date'), pf.get('trl6_date'), pf.get('trl9_date')]):
+                    continue
+                
+                trl_dates = []
+                if pf.get('trl3_date'):
+                    try:
+                        trl_dates.append(('TRL3', datetime.strptime(pf['trl3_date'], '%Y-%m-%d')))
+                    except: pass
+                if pf.get('trl6_date'):
+                    try:
+                        trl_dates.append(('TRL6', datetime.strptime(pf['trl6_date'], '%Y-%m-%d')))
+                    except: pass
+                if pf.get('trl9_date'):
+                    try:
+                        trl_dates.append(('TRL9', datetime.strptime(pf['trl9_date'], '%Y-%m-%d')))
+                    except: pass
+                
+                if trl_dates:
+                    trl_dates.sort(key=lambda x: x[1])  # Sort by date
+                    items.append({
+                        'label': pf['label'],
+                        'name': pf['name'][:40] + '...' if len(pf['name']) > 40 else pf['name'],
+                        'trl_dates': trl_dates
+                    })
         
-        if view in ['Capabilities', 'Both']:
-            caps = self.db.get_capabilities()
+        elif view == 'Capabilities':
+            caps = self.db.get_capabilities(filters)
             for cap in caps:
-                for trl, date_field in [('TRL3', 'trl3_date'), ('TRL6', 'trl6_date'), ('TRL9', 'trl9_date')]:
-                    if cap.get(date_field):
-                        try:
-                            date = datetime.strptime(cap[date_field], '%Y-%m-%d')
-                            items.append({
-                                'date': date,
-                                'label': f"{cap['label']} ({trl})",
-                                'type': 'CAP',
-                                'color': 'green'
-                            })
-                        except:
-                            pass
+                # Skip if no dates
+                if not any([cap.get('trl3_date'), cap.get('trl6_date'), cap.get('trl9_date')]):
+                    continue
+                
+                trl_dates = []
+                if cap.get('trl3_date'):
+                    try:
+                        trl_dates.append(('TRL3', datetime.strptime(cap['trl3_date'], '%Y-%m-%d')))
+                    except: pass
+                if cap.get('trl6_date'):
+                    try:
+                        trl_dates.append(('TRL6', datetime.strptime(cap['trl6_date'], '%Y-%m-%d')))
+                    except: pass
+                if cap.get('trl9_date'):
+                    try:
+                        trl_dates.append(('TRL9', datetime.strptime(cap['trl9_date'], '%Y-%m-%d')))
+                    except: pass
+                
+                if trl_dates:
+                    trl_dates.sort(key=lambda x: x[1])  # Sort by date
+                    items.append({
+                        'label': cap['label'],
+                        'name': cap['name'][:40] + '...' if len(cap['name']) > 40 else cap['name'],
+                        'trl_dates': trl_dates
+                    })
         
         if not items:
-            ax.text(0.5, 0.5, 'No timeline data available', 
+            ax.text(0.5, 0.5, 'No timeline data available\n\nSelect filters and click Update Roadmap', 
                    ha='center', va='center', fontsize=14)
+            ax.set_xlim(0, 1)
+            ax.set_ylim(0, 1)
+            ax.axis('off')
         else:
-            # Sort by date
-            items.sort(key=lambda x: x['date'])
+            # Sort items by first TRL date
+            items.sort(key=lambda x: x['trl_dates'][0][1])
             
-            # Create timeline
-            dates = [item['date'] for item in items]
-            y_positions = list(range(len(items)))
-            colors = [item['color'] for item in items]
-            labels = [item['label'] for item in items]
+            # Limit to top 50 items for readability
+            if len(items) > 50:
+                items = items[:50]
+                title_suffix = f" (showing first 50 of {len(items)} items)"
+            else:
+                title_suffix = f" ({len(items)} items)"
             
-            ax.scatter(dates, y_positions, c=colors, s=100, alpha=0.6)
+            # Draw timeline bars
+            y_pos = 0
+            y_labels = []
+            y_positions = []
             
-            # Add labels
-            for i, item in enumerate(items):
-                ax.text(item['date'], i, f"  {item['label']}", 
-                       va='center', fontsize=8)
+            # Find date range
+            all_dates = []
+            for item in items:
+                all_dates.extend([d[1] for d in item['trl_dates']])
+            min_date = min(all_dates)
+            max_date = max(all_dates)
             
-            ax.set_xlabel('Date', fontsize=12)
-            ax.set_ylabel('Milestones', fontsize=12)
-            ax.set_title('Product Roadmap', fontsize=14, fontweight='bold')
+            # Add padding to date range
+            date_range = (max_date - min_date).days
+            padding = max(30, date_range * 0.1)  # At least 30 days padding
+            plot_min_date = min_date - timedelta(days=padding)
+            plot_max_date = max_date + timedelta(days=padding)
             
-            # Format x-axis
-            ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
-            ax.xaxis.set_major_locator(mdates.MonthLocator())
-            fig.autofmt_xdate()
+            for item in items:
+                y_labels.append(f"{item['label']}")
+                y_positions.append(y_pos)
+                
+                # Draw segments between TRL milestones
+                trl_dates = item['trl_dates']
+                
+                # Draw line segments with colors based on TRL level achieved
+                for i in range(len(trl_dates)):
+                    start_date = trl_dates[i][1]
+                    start_trl = trl_dates[i][0]
+                    
+                    # Determine end date and color
+                    if i < len(trl_dates) - 1:
+                        end_date = trl_dates[i + 1][1]
+                        color = trl_colors[start_trl]
+                    else:
+                        # Last segment extends to the right
+                        end_date = start_date + timedelta(days=max(30, date_range * 0.05))
+                        color = trl_colors[start_trl]
+                    
+                    # Draw horizontal bar
+                    ax.barh(y_pos, (end_date - start_date).days, 
+                           left=mdates.date2num(start_date), 
+                           height=0.6, 
+                           color=color, 
+                           alpha=0.8,
+                           edgecolor='black',
+                           linewidth=0.5)
+                    
+                    # Add TRL marker at milestone
+                    ax.plot(mdates.date2num(start_date), y_pos, 'o', 
+                           color='black', markersize=6, zorder=10)
+                
+                y_pos += 1
             
-            ax.grid(True, alpha=0.3)
-            ax.set_yticks([])
+            # Configure axes
+            ax.set_ylim(-0.5, len(items) - 0.5)
+            ax.set_yticks(y_positions)
+            ax.set_yticklabels(y_labels, fontsize=8)
+            ax.invert_yaxis()  # Top to bottom
+            
+            # Format x-axis as dates with abbreviated month and 2-digit year (Jan 25, Feb 26, etc.)
+            ax.xaxis_date()
+            ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %y'))
+            ax.xaxis.set_major_locator(mdates.MonthLocator(interval=1))
+            
+            # Rotate date labels
+            plt.setp(ax.xaxis.get_majorticklabels(), rotation=45, ha='right')
+            
+            ax.set_xlabel('Timeline', fontsize=12, fontweight='bold')
+            ax.set_title(f'{view} Roadmap{title_suffix}', fontsize=14, fontweight='bold')
+            
+            # Add grid
+            ax.grid(True, axis='x', alpha=0.3, linestyle='--')
+            
+            # Add legend
+            from matplotlib.patches import Patch
+            legend_elements = [
+                Patch(facecolor=trl_colors['TRL3'], label='TRL 3 (Proof of Concept)', alpha=0.8),
+                Patch(facecolor=trl_colors['TRL6'], label='TRL 6 (Prototype)', alpha=0.8),
+                Patch(facecolor=trl_colors['TRL9'], label='TRL 9 (Production)', alpha=0.8)
+            ]
+            ax.legend(handles=legend_elements, loc='upper right', fontsize=9)
+            
+            # Tight layout
+            fig.tight_layout()
         
         # Embed in tkinter
         canvas = FigureCanvasTkAgg(fig, master=self.roadmap_frame)
         canvas.draw()
         canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+    
+    def export_to_json(self):
+        """Export all database content to a JSON file."""
+        # Ask user for file location
+        filepath = filedialog.asksaveasfilename(
+            defaultextension=".json",
+            filetypes=[("JSON files", "*.json"), ("All files", "*.*")],
+            title="Export Database to JSON"
+        )
+        
+        if not filepath:
+            return
+        
+        try:
+            # Gather all data from database
+            export_data = {
+                'export_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'product_features': [],
+                'capabilities': [],
+                'technical_functions': [],
+                'pf_capabilities_relationships': [],
+                'cap_technical_functions_relationships': []
+            }
+            
+            # Export Product Features
+            pfs = self.db.get_product_features()
+            for pf in pfs:
+                export_data['product_features'].append(pf)
+            
+            # Export Capabilities
+            caps = self.db.get_capabilities()
+            for cap in caps:
+                export_data['capabilities'].append(cap)
+            
+            # Export Technical Functions
+            tfs = self.db.get_technical_functions()
+            for tf in tfs:
+                export_data['technical_functions'].append(tf)
+            
+            # Export relationships - Product Features to Capabilities
+            for pf in pfs:
+                linked_caps = self.db.get_pf_capabilities(pf['id'])
+                for cap in linked_caps:
+                    export_data['pf_capabilities_relationships'].append({
+                        'product_feature_id': pf['id'],
+                        'product_feature_label': pf['label'],
+                        'capability_id': cap['id'],
+                        'capability_label': cap['label']
+                    })
+            
+            # Export relationships - Capabilities to Technical Functions
+            for cap in caps:
+                linked_tfs = self.db.get_cap_technical_functions(cap['id'])
+                for tf in linked_tfs:
+                    export_data['cap_technical_functions_relationships'].append({
+                        'capability_id': cap['id'],
+                        'capability_label': cap['label'],
+                        'technical_function_id': tf['id'],
+                        'technical_function_label': tf['label']
+                    })
+            
+            # Write to JSON file
+            with open(filepath, 'w', encoding='utf-8') as f:
+                json.dump(export_data, f, indent=2, ensure_ascii=False)
+            
+            messagebox.showinfo(
+                "Export Successful",
+                f"Database exported successfully to:\n{filepath}\n\n"
+                f"Product Features: {len(export_data['product_features'])}\n"
+                f"Capabilities: {len(export_data['capabilities'])}\n"
+                f"Technical Functions: {len(export_data['technical_functions'])}\n"
+                f"PF-Capability Links: {len(export_data['pf_capabilities_relationships'])}\n"
+                f"Capability-TF Links: {len(export_data['cap_technical_functions_relationships'])}"
+            )
+            
+        except Exception as e:
+            messagebox.showerror("Export Error", f"Failed to export database:\n{str(e)}")
     
     def __del__(self):
         """Cleanup."""
