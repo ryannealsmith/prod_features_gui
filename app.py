@@ -66,7 +66,7 @@ class ProductFeaturesApp:
         scroll.pack(side=tk.RIGHT, fill=tk.Y)
         
         self.pf_tree = ttk.Treeview(list_frame, 
-                                     columns=('Label', 'Name', 'Platform', 'Start Date'),
+                                     columns=('Label', 'Name', 'Platform', 'Start Date', 'TRL3', 'TRL6', 'TRL9'),
                                      show='tree headings',
                                      yscrollcommand=scroll.set)
         scroll.config(command=self.pf_tree.yview)
@@ -75,12 +75,18 @@ class ProductFeaturesApp:
         self.pf_tree.heading('Name', text='Name')
         self.pf_tree.heading('Platform', text='Platform')
         self.pf_tree.heading('Start Date', text='Start Date')
+        self.pf_tree.heading('TRL3', text='TRL3')
+        self.pf_tree.heading('TRL6', text='TRL6')
+        self.pf_tree.heading('TRL9', text='TRL9')
         
         self.pf_tree.column('#0', width=0, stretch=False)
-        self.pf_tree.column('Label', width=120)
-        self.pf_tree.column('Name', width=250)
-        self.pf_tree.column('Platform', width=100)
-        self.pf_tree.column('Start Date', width=100)
+        self.pf_tree.column('Label', width=100)
+        self.pf_tree.column('Name', width=200)
+        self.pf_tree.column('Platform', width=90)
+        self.pf_tree.column('Start Date', width=90)
+        self.pf_tree.column('TRL3', width=90)
+        self.pf_tree.column('TRL6', width=90)
+        self.pf_tree.column('TRL9', width=90)
         
         self.pf_tree.pack(fill=tk.BOTH, expand=True)
         self.pf_tree.bind('<<TreeviewSelect>>', self.on_pf_select)
@@ -483,7 +489,10 @@ class ProductFeaturesApp:
                                values=(feature['label'], 
                                       feature['name'],
                                       feature['platform'],
-                                      feature['start_date']))
+                                      feature['start_date'],
+                                      feature['trl3_date'] or '',
+                                      feature['trl6_date'] or '',
+                                      feature['trl9_date'] or ''))
     
     def on_pf_select(self, event):
         """Handle Product Feature selection."""
