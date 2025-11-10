@@ -198,7 +198,7 @@ class ProductFeaturesApp:
         scroll.pack(side=tk.RIGHT, fill=tk.Y)
         
         self.cap_tree = ttk.Treeview(list_frame,
-                                      columns=('Label', 'Name', 'Swimlane'),
+                                      columns=('Label', 'Name', 'Swimlane', 'Start Date', 'TRL3', 'TRL6', 'TRL9'),
                                       show='tree headings',
                                       yscrollcommand=scroll.set)
         scroll.config(command=self.cap_tree.yview)
@@ -206,11 +206,19 @@ class ProductFeaturesApp:
         self.cap_tree.heading('Label', text='Label')
         self.cap_tree.heading('Name', text='Name')
         self.cap_tree.heading('Swimlane', text='Swimlane')
+        self.cap_tree.heading('Start Date', text='Start Date')
+        self.cap_tree.heading('TRL3', text='TRL3')
+        self.cap_tree.heading('TRL6', text='TRL6')
+        self.cap_tree.heading('TRL9', text='TRL9')
         
         self.cap_tree.column('#0', width=0, stretch=False)
-        self.cap_tree.column('Label', width=120)
-        self.cap_tree.column('Name', width=300)
-        self.cap_tree.column('Swimlane', width=100)
+        self.cap_tree.column('Label', width=100)
+        self.cap_tree.column('Name', width=200)
+        self.cap_tree.column('Swimlane', width=80)
+        self.cap_tree.column('Start Date', width=90)
+        self.cap_tree.column('TRL3', width=90)
+        self.cap_tree.column('TRL6', width=90)
+        self.cap_tree.column('TRL9', width=90)
         
         self.cap_tree.pack(fill=tk.BOTH, expand=True)
         self.cap_tree.bind('<<TreeviewSelect>>', self.on_cap_select)
@@ -684,7 +692,13 @@ class ProductFeaturesApp:
         
         for cap in caps:
             self.cap_tree.insert('', tk.END, iid=cap['id'],
-                                values=(cap['label'], cap['name'], cap['swimlane']))
+                                values=(cap['label'], 
+                                       cap['name'], 
+                                       cap['swimlane'],
+                                       cap['start_date'] or '',
+                                       cap['trl3_date'] or '',
+                                       cap['trl6_date'] or '',
+                                       cap['trl9_date'] or ''))
     
     def on_cap_select(self, event):
         """Handle Capability selection."""
