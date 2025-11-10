@@ -34,6 +34,52 @@ def clean_text(text):
         return None
     return str(text).strip()
 
+def extract_swimlane_from_label(label):
+    """Extract swimlane from capability or technical function label.
+    
+    Examples:
+        CA-ACT-1.1 -> Actors (ACT)
+        CA-LOC-4.1 -> Localisation (LOC)
+        TF-PRC-1.0 -> Perception (PRC)
+    """
+    if not label:
+        return None
+    
+    # Mapping of abbreviations to full swimlane names
+    swimlane_map = {
+        'ACT': 'Actors',
+        'LOC': 'Localisation',
+        'ENV': 'Environment',
+        'MAP': 'Mapping',
+        'INF': 'Infrastructure',
+        'STA': 'Static',
+        'CGO': 'Cargo',
+        'VEH': 'Vehicle',
+        'SV': 'Supervision',
+        'FWD': 'Forward',
+        'REV': 'Reverse',
+        'NAV': 'Navigation',
+        'MSN': 'Mission',
+        'HMI': 'HMI',
+        'CE': 'CE',
+        'PRK': 'Parking',
+        'DCK': 'Docking',
+        'CHE': 'Charge',
+        'HCH': 'HookCharge',
+        'XMS': 'Crossmarket',
+        'OPS': 'Operations',
+        'PRC': 'Perception',
+        'BAR': 'Barrier'
+    }
+    
+    # Try to extract the code (e.g., 'ACT' from 'CA-ACT-1.1' or 'PRC' from 'TF-PRC-1.0')
+    parts = label.split('-')
+    if len(parts) >= 2:
+        code = parts[1]
+        return swimlane_map.get(code, code)  # Return mapped name or the code itself
+    
+    return None
+
 def import_data():
     """Import all data from Excel to database."""
     db = Database()
@@ -84,9 +130,14 @@ def import_data():
         label = clean_text(row.get('Label'))
         if not label or label == 'nan':
             continue
+        
+        # Get swimlane from Excel, or extract from label if missing
+        swimlane = clean_text(row.get('Swimlane'))
+        if not swimlane:
+            swimlane = extract_swimlane_from_label(label)
             
         cap_data = {
-            'swimlane': clean_text(row.get('Swimlane')),
+            'swimlane': swimlane,
             'sl': clean_text(row.get('SL')),
             'maj': row.get('Maj') if not pd.isna(row.get('Maj')) else None,
             'min': row.get('Min') if not pd.isna(row.get('Min')) else None,
@@ -123,9 +174,14 @@ def import_data():
         label = clean_text(row.get('Label'))
         if not label or label == 'nan':
             continue
+        
+        # Get swimlane from Excel, or extract from label if missing
+        swimlane = clean_text(row.get('Swimlane'))
+        if not swimlane:
+            swimlane = extract_swimlane_from_label(label)
             
         tf_data = {
-            'swimlane': clean_text(row.get('Swimlane')),
+            'swimlane': swimlane,
             'sl': clean_text(row.get('SL')),
             'maj': row.get('Maj') if not pd.isna(row.get('Maj')) else None,
             'min': row.get('Min') if not pd.isna(row.get('Min')) else None,
