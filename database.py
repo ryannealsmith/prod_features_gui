@@ -119,6 +119,18 @@ class Database:
             )
         ''')
         
+        # Milestones table for roadmap
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS milestones (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                description TEXT,
+                date DATE NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
         # Create indexes for better query performance
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_pf_label ON product_features(label)')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_cap_label ON capabilities(label)')
@@ -526,3 +538,43 @@ class Database:
         cursor = self.connection.cursor()
         cursor.execute(f'SELECT DISTINCT {column} FROM {table} WHERE {column} IS NOT NULL ORDER BY {column}')
         return [row[0] for row in cursor.fetchall()]
+    
+    # Milestone CRUD operations
+    def add_milestone(self, data: Dict) -> int:
+        """Add a new milestone."""
+        cursor = self.connection.cursor()
+        cursor.execute('''
+            INSERT INTO milestones (name, description, date)
+            VALUES (?, ?, ?)
+        ''', (data.get('name'), data.get('description'), data.get('date')))
+        self.connection.commit()
+        return cursor.lastrowid
+    
+    def get_milestones(self) -> List[Dict]:
+        """Get all milestones."""
+        cursor = self.connection.cursor()
+        cursor.execute('SELECT * FROM milestones ORDER BY date')
+        return [dict(row) for row in cursor.fetchall()]
+    
+    def get_milestone_by_id(self, milestone_id: int) -> Optional[Dict]:
+        """Get a milestone by ID."""
+        cursor = self.connection.cursor()
+        cursor.execute('SELECT * FROM milestones WHERE id = ?', (milestone_id,))
+        row = cursor.fetchone()
+        return dict(row) if row else None
+    
+    def update_milestone(self, milestone_id: int, data: Dict):
+        """Update a milestone."""
+        cursor = self.connection.cursor()
+        cursor.execute('''
+            UPDATE milestones 
+            SET name = ?, description = ?, date = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        ''', (data.get('name'), data.get('description'), data.get('date'), milestone_id))
+        self.connection.commit()
+    
+    def delete_milestone(self, milestone_id: int):
+        """Delete a milestone."""
+        cursor = self.connection.cursor()
+        cursor.execute('DELETE FROM milestones WHERE id = ?', (milestone_id,))
+        self.connection.commit()

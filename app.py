@@ -629,6 +629,9 @@ class ProductFeaturesApp:
         ttk.Button(control_frame, text="Update Roadmap",
                   command=self.update_roadmap).pack(side=tk.LEFT, padx=20)
         
+        ttk.Button(control_frame, text="Add Milestone",
+                  command=self.add_milestone).pack(side=tk.LEFT, padx=5)
+        
         # Canvas for matplotlib
         self.roadmap_frame = ttk.Frame(tab)
         self.roadmap_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
@@ -1754,6 +1757,117 @@ class ProductFeaturesApp:
         except Exception as e:
             messagebox.showerror("Error", f"Failed to export: {str(e)}")
     
+    def add_milestone(self):
+        """Add a new milestone to the roadmap."""
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Add Milestone")
+        dialog.geometry("450x250")
+        dialog.resizable(False, False)
+        
+        # Create form
+        ttk.Label(dialog, text="Milestone Name:", font=('TkDefaultFont', 9, 'bold')).grid(row=0, column=0, sticky=tk.W, padx=10, pady=10)
+        name_entry = ttk.Entry(dialog, width=40)
+        name_entry.grid(row=0, column=1, sticky=tk.W, padx=10, pady=10)
+        
+        ttk.Label(dialog, text="Description:", font=('TkDefaultFont', 9, 'bold')).grid(row=1, column=0, sticky=tk.NW, padx=10, pady=10)
+        desc_text = scrolledtext.ScrolledText(dialog, width=40, height=5)
+        desc_text.grid(row=1, column=1, sticky=tk.W, padx=10, pady=10)
+        
+        ttk.Label(dialog, text="Date:", font=('TkDefaultFont', 9, 'bold')).grid(row=2, column=0, sticky=tk.W, padx=10, pady=10)
+        date_frame = ttk.Frame(dialog)
+        date_frame.grid(row=2, column=1, sticky=tk.W, padx=10, pady=10)
+        
+        date_entry = ttk.Entry(date_frame, width=15)
+        date_entry.pack(side=tk.LEFT, padx=(0, 5))
+        date_entry.insert(0, datetime.now().strftime('%Y-%m-%d'))
+        
+        def open_milestone_calendar():
+            """Open calendar picker for milestone date."""
+            cal_window = tk.Toplevel(dialog)
+            cal_window.title("Select Date")
+            cal_window.geometry("300x300")
+            cal_window.resizable(False, False)
+            
+            try:
+                current_date = datetime.strptime(date_entry.get(), '%Y-%m-%d').date()
+            except:
+                current_date = datetime.now().date()
+            
+            cal = Calendar(cal_window, selectmode='day', 
+                          year=current_date.year, 
+                          month=current_date.month, 
+                          day=current_date.day,
+                          date_pattern='yyyy-mm-dd',
+                          foreground='black',
+                          background='white',
+                          headersforeground='black',
+                          headersbackground='lightgray',
+                          normalforeground='black',
+                          normalbackground='white',
+                          weekendforeground='black',
+                          weekendbackground='white')
+            cal.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
+            
+            def select_date():
+                selected = cal.get_date()
+                date_entry.delete(0, tk.END)
+                date_entry.insert(0, selected)
+                cal_window.destroy()
+            
+            btn_frame = ttk.Frame(cal_window)
+            btn_frame.pack(pady=5)
+            ttk.Button(btn_frame, text="Select", command=select_date).pack(side=tk.LEFT, padx=5)
+            ttk.Button(btn_frame, text="Cancel", command=cal_window.destroy).pack(side=tk.LEFT, padx=5)
+            
+            cal_window.transient(dialog)
+            cal_window.grab_set()
+        
+        ttk.Button(date_frame, text="📅", width=3, command=open_milestone_calendar).pack(side=tk.LEFT)
+        
+        def save_milestone():
+            """Save the milestone."""
+            name = name_entry.get().strip()
+            description = desc_text.get('1.0', tk.END).strip()
+            date_str = date_entry.get().strip()
+            
+            if not name:
+                messagebox.showwarning("Missing Data", "Milestone name is required!")
+                return
+            
+            if not date_str:
+                messagebox.showwarning("Missing Data", "Date is required!")
+                return
+            
+            # Validate date
+            try:
+                datetime.strptime(date_str, '%Y-%m-%d')
+            except ValueError:
+                messagebox.showwarning("Invalid Date", "Please enter date in YYYY-MM-DD format")
+                return
+            
+            try:
+                self.db.add_milestone({
+                    'name': name,
+                    'description': description,
+                    'date': date_str
+                })
+                messagebox.showinfo("Success", "Milestone added successfully!")
+                dialog.destroy()
+                self.update_roadmap()
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to add milestone: {str(e)}")
+        
+        # Buttons
+        btn_frame = ttk.Frame(dialog)
+        btn_frame.grid(row=3, column=0, columnspan=2, pady=15)
+        
+        ttk.Button(btn_frame, text="Save", command=save_milestone).pack(side=tk.LEFT, padx=5)
+        ttk.Button(btn_frame, text="Cancel", command=dialog.destroy).pack(side=tk.LEFT, padx=5)
+        
+        # Make dialog modal
+        dialog.transient(self.root)
+        dialog.grab_set()
+    
     def update_roadmap(self):
         """Update the roadmap visualization with Gantt-style timeline."""
         # Clear previous plot
@@ -1934,12 +2048,43 @@ class ProductFeaturesApp:
             # Add grid
             ax.grid(True, axis='x', alpha=0.3, linestyle='--')
             
+            # Add milestones
+            milestones = self.db.get_milestones()
+            for milestone in milestones:
+                try:
+                    milestone_date = datetime.strptime(milestone['date'], '%Y-%m-%d')
+                    
+                    # Check if milestone is within the visible date range
+                    if plot_min_date <= milestone_date <= plot_max_date:
+                        # Draw vertical line
+                        ax.axvline(x=mdates.date2num(milestone_date), 
+                                  color='purple', linestyle='--', linewidth=2, alpha=0.7, zorder=5)
+                        
+                        # Add star at the top
+                        ax.plot(mdates.date2num(milestone_date), -0.3, 
+                               marker='*', color='gold', markersize=20, 
+                               markeredgecolor='purple', markeredgewidth=1.5, zorder=15)
+                        
+                        # Add milestone name as annotation
+                        ax.annotate(milestone['name'], 
+                                   xy=(mdates.date2num(milestone_date), -0.3),
+                                   xytext=(0, 10), textcoords='offset points',
+                                   ha='center', va='bottom',
+                                   fontsize=8, fontweight='bold',
+                                   bbox=dict(boxstyle='round,pad=0.3', facecolor='lightyellow', 
+                                           edgecolor='purple', alpha=0.8))
+                except:
+                    pass  # Skip invalid milestone dates
+            
             # Add legend
             from matplotlib.patches import Patch
+            from matplotlib.lines import Line2D
             legend_elements = [
                 Patch(facecolor=trl_colors['TRL3'], label='TRL 3 (Proof of Concept)', alpha=0.8),
                 Patch(facecolor=trl_colors['TRL6'], label='TRL 6 (Prototype)', alpha=0.8),
-                Patch(facecolor=trl_colors['TRL9'], label='TRL 9 (Production)', alpha=0.8)
+                Patch(facecolor=trl_colors['TRL9'], label='TRL 9 (Production)', alpha=0.8),
+                Line2D([0], [0], marker='*', color='w', markerfacecolor='gold', 
+                      markeredgecolor='purple', markersize=12, label='Milestone')
             ]
             ax.legend(handles=legend_elements, loc='upper right', fontsize=9)
             
