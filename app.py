@@ -278,6 +278,55 @@ class ProductFeaturesApp:
         self.cap_form['details'].grid(row=row, column=1, sticky=tk.EW, pady=3)
         row += 1
         
+        # Technical Functions section
+        ttk.Label(detail_frame, text="Technical Functions:").grid(row=row, column=0, sticky=tk.NW, pady=3)
+        
+        tf_frame = ttk.Frame(detail_frame)
+        tf_frame.grid(row=row, column=1, sticky=tk.EW, pady=3)
+        
+        tf_scroll = ttk.Scrollbar(tf_frame)
+        tf_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        self.cap_tfs_list = tk.Listbox(tf_frame, height=4, 
+                                        yscrollcommand=tf_scroll.set)
+        self.cap_tfs_list.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        tf_scroll.config(command=self.cap_tfs_list.yview)
+        row += 1
+        
+        # Technical Function management buttons
+        tf_btn_frame = ttk.Frame(detail_frame)
+        tf_btn_frame.grid(row=row, column=1, sticky=tk.W, pady=3)
+        ttk.Button(tf_btn_frame, text="Add Technical Function", 
+                  command=self.add_cap_tf).pack(side=tk.LEFT, padx=2)
+        ttk.Button(tf_btn_frame, text="Remove Technical Function", 
+                  command=self.remove_cap_tf).pack(side=tk.LEFT, padx=2)
+        row += 1
+        
+        # Product Features section
+        ttk.Label(detail_frame, text="Product Features:").grid(row=row, column=0, sticky=tk.NW, pady=3)
+        
+        pf_frame = ttk.Frame(detail_frame)
+        pf_frame.grid(row=row, column=1, sticky=tk.EW, pady=3)
+        
+        pf_scroll = ttk.Scrollbar(pf_frame)
+        pf_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        self.cap_pfs_list = tk.Listbox(pf_frame, height=4, 
+                                        yscrollcommand=pf_scroll.set)
+        self.cap_pfs_list.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        pf_scroll.config(command=self.cap_pfs_list.yview)
+        row += 1
+        
+        # Product Feature management buttons
+        pf_btn_frame = ttk.Frame(detail_frame)
+        pf_btn_frame.grid(row=row, column=1, sticky=tk.W, pady=3)
+        ttk.Button(pf_btn_frame, text="Add Product Feature", 
+                  command=self.add_cap_pf).pack(side=tk.LEFT, padx=2)
+        ttk.Button(pf_btn_frame, text="Remove Product Feature", 
+                  command=self.remove_cap_pf).pack(side=tk.LEFT, padx=2)
+        row += 1
+        
+        # Save button
         ttk.Button(detail_frame, text="Save Changes",
                   command=self.save_capability).grid(row=row, column=1, sticky=tk.E, pady=10)
         
@@ -808,6 +857,18 @@ class ProductFeaturesApp:
                 widget.delete(0, tk.END)
                 if cap.get(field_name):
                     widget.insert(0, str(cap[field_name]))
+        
+        # Load linked Technical Functions
+        self.cap_tfs_list.delete(0, tk.END)
+        tfs = self.db.get_cap_technical_functions(self.current_cap_id)
+        for tf in tfs:
+            self.cap_tfs_list.insert(tk.END, f"{tf['label']}: {tf['name']}")
+        
+        # Load linked Product Features
+        self.cap_pfs_list.delete(0, tk.END)
+        pfs = self.db.get_cap_product_features(self.current_cap_id)
+        for pf in pfs:
+            self.cap_pfs_list.insert(tk.END, f"{pf['label']}: {pf['name']}")
     
     def save_capability(self):
         """Save Capability changes."""
@@ -883,6 +944,190 @@ class ProductFeaturesApp:
                 self.load_capabilities()
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to delete: {str(e)}")
+    
+    def add_cap_tf(self):
+        """Add a Technical Function to the current Capability."""
+        if not self.current_cap_id:
+            messagebox.showwarning("No Selection", "Please select a capability first.")
+            return
+        
+        # Create dialog to select TF
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Add Technical Function")
+        dialog.geometry("600x400")
+        
+        ttk.Label(dialog, text="Select Technical Function to add:", 
+                 font=('TkDefaultFont', 10, 'bold')).pack(padx=10, pady=10)
+        
+        # List of available TFs
+        list_frame = ttk.Frame(dialog)
+        list_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+        
+        scroll = ttk.Scrollbar(list_frame)
+        scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        tf_listbox = tk.Listbox(list_frame, yscrollcommand=scroll.set)
+        tf_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scroll.config(command=tf_listbox.yview)
+        
+        # Load all TFs
+        all_tfs = self.db.get_technical_functions()
+        linked_tfs = self.db.get_cap_technical_functions(self.current_cap_id)
+        linked_tf_ids = {tf['id'] for tf in linked_tfs}
+        
+        tf_map = {}
+        for tf in all_tfs:
+            if tf['id'] not in linked_tf_ids:
+                display_text = f"{tf['label']}: {tf['name']}"
+                tf_listbox.insert(tk.END, display_text)
+                tf_map[display_text] = tf['id']
+        
+        def add_selected():
+            selection = tf_listbox.curselection()
+            if not selection:
+                messagebox.showwarning("No Selection", "Please select a technical function.")
+                return
+            
+            selected_text = tf_listbox.get(selection[0])
+            tf_id = tf_map[selected_text]
+            
+            self.db.link_cap_tf(self.current_cap_id, tf_id)
+            
+            # Refresh the list
+            self.cap_tfs_list.delete(0, tk.END)
+            tfs = self.db.get_cap_technical_functions(self.current_cap_id)
+            for tf in tfs:
+                self.cap_tfs_list.insert(tk.END, f"{tf['label']}: {tf['name']}")
+            
+            dialog.destroy()
+            messagebox.showinfo("Success", "Technical Function added!")
+        
+        # Buttons
+        btn_frame = ttk.Frame(dialog)
+        btn_frame.pack(fill=tk.X, padx=10, pady=10)
+        
+        ttk.Button(btn_frame, text="Add", command=add_selected).pack(side=tk.RIGHT, padx=5)
+        ttk.Button(btn_frame, text="Cancel", command=dialog.destroy).pack(side=tk.RIGHT)
+    
+    def remove_cap_tf(self):
+        """Remove a Technical Function from the current Capability."""
+        if not self.current_cap_id:
+            messagebox.showwarning("No Selection", "Please select a capability first.")
+            return
+        
+        selection = self.cap_tfs_list.curselection()
+        if not selection:
+            messagebox.showwarning("No Selection", "Please select a technical function to remove.")
+            return
+        
+        selected_text = self.cap_tfs_list.get(selection[0])
+        tf_label = selected_text.split(':')[0].strip()
+        
+        # Find the TF by label
+        tfs = self.db.get_cap_technical_functions(self.current_cap_id)
+        tf_to_remove = None
+        for tf in tfs:
+            if tf['label'] == tf_label:
+                tf_to_remove = tf
+                break
+        
+        if tf_to_remove:
+            if messagebox.askyesno("Confirm", f"Remove '{selected_text}'?"):
+                self.db.unlink_cap_tf(self.current_cap_id, tf_to_remove['id'])
+                self.cap_tfs_list.delete(selection[0])
+                messagebox.showinfo("Success", "Technical Function removed!")
+    
+    def add_cap_pf(self):
+        """Add a Product Feature to the current Capability."""
+        if not self.current_cap_id:
+            messagebox.showwarning("No Selection", "Please select a capability first.")
+            return
+        
+        # Create dialog to select PF
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Add Product Feature")
+        dialog.geometry("600x400")
+        
+        ttk.Label(dialog, text="Select Product Feature to add:", 
+                 font=('TkDefaultFont', 10, 'bold')).pack(padx=10, pady=10)
+        
+        # List of available PFs
+        list_frame = ttk.Frame(dialog)
+        list_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+        
+        scroll = ttk.Scrollbar(list_frame)
+        scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        pf_listbox = tk.Listbox(list_frame, yscrollcommand=scroll.set)
+        pf_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scroll.config(command=pf_listbox.yview)
+        
+        # Load all PFs
+        all_pfs = self.db.get_product_features()
+        linked_pfs = self.db.get_cap_product_features(self.current_cap_id)
+        linked_pf_ids = {pf['id'] for pf in linked_pfs}
+        
+        pf_map = {}
+        for pf in all_pfs:
+            if pf['id'] not in linked_pf_ids:
+                display_text = f"{pf['label']}: {pf['name']}"
+                pf_listbox.insert(tk.END, display_text)
+                pf_map[display_text] = pf['id']
+        
+        def add_selected():
+            selection = pf_listbox.curselection()
+            if not selection:
+                messagebox.showwarning("No Selection", "Please select a product feature.")
+                return
+            
+            selected_text = pf_listbox.get(selection[0])
+            pf_id = pf_map[selected_text]
+            
+            self.db.link_pf_capability(pf_id, self.current_cap_id)
+            
+            # Refresh the list
+            self.cap_pfs_list.delete(0, tk.END)
+            pfs = self.db.get_cap_product_features(self.current_cap_id)
+            for pf in pfs:
+                self.cap_pfs_list.insert(tk.END, f"{pf['label']}: {pf['name']}")
+            
+            dialog.destroy()
+            messagebox.showinfo("Success", "Product Feature added!")
+        
+        # Buttons
+        btn_frame = ttk.Frame(dialog)
+        btn_frame.pack(fill=tk.X, padx=10, pady=10)
+        
+        ttk.Button(btn_frame, text="Add", command=add_selected).pack(side=tk.RIGHT, padx=5)
+        ttk.Button(btn_frame, text="Cancel", command=dialog.destroy).pack(side=tk.RIGHT)
+    
+    def remove_cap_pf(self):
+        """Remove a Product Feature from the current Capability."""
+        if not self.current_cap_id:
+            messagebox.showwarning("No Selection", "Please select a capability first.")
+            return
+        
+        selection = self.cap_pfs_list.curselection()
+        if not selection:
+            messagebox.showwarning("No Selection", "Please select a product feature to remove.")
+            return
+        
+        selected_text = self.cap_pfs_list.get(selection[0])
+        pf_label = selected_text.split(':')[0].strip()
+        
+        # Find the PF by label
+        pfs = self.db.get_cap_product_features(self.current_cap_id)
+        pf_to_remove = None
+        for pf in pfs:
+            if pf['label'] == pf_label:
+                pf_to_remove = pf
+                break
+        
+        if pf_to_remove:
+            if messagebox.askyesno("Confirm", f"Remove '{selected_text}'?"):
+                self.db.unlink_pf_capability(pf_to_remove['id'], self.current_cap_id)
+                self.cap_pfs_list.delete(selection[0])
+                messagebox.showinfo("Success", "Product Feature removed!")
     
     def load_technical_functions(self):
         """Load technical functions into the tree."""
