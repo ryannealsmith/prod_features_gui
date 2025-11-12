@@ -629,9 +629,6 @@ class ProductFeaturesApp:
         ttk.Button(control_frame, text="Update Roadmap",
                   command=self.update_roadmap).pack(side=tk.LEFT, padx=20)
         
-        ttk.Button(control_frame, text="Add Milestone",
-                  command=self.add_milestone).pack(side=tk.LEFT, padx=5)
-        
         ttk.Button(control_frame, text="Manage Milestones",
                   command=self.manage_milestones).pack(side=tk.LEFT, padx=5)
         
@@ -1970,6 +1967,119 @@ class ProductFeaturesApp:
             
             detail_dialog.transient(dialog)
         
+        def add_new_milestone():
+            """Add a new milestone from within the manage dialog."""
+            add_dialog = tk.Toplevel(dialog)
+            add_dialog.title("Add Milestone")
+            add_dialog.geometry("450x250")
+            add_dialog.resizable(False, False)
+            
+            # Create form
+            ttk.Label(add_dialog, text="Milestone Name:", font=('TkDefaultFont', 9, 'bold')).grid(row=0, column=0, sticky=tk.W, padx=10, pady=10)
+            name_entry = ttk.Entry(add_dialog, width=40)
+            name_entry.grid(row=0, column=1, sticky=tk.W, padx=10, pady=10)
+            
+            ttk.Label(add_dialog, text="Description:", font=('TkDefaultFont', 9, 'bold')).grid(row=1, column=0, sticky=tk.NW, padx=10, pady=10)
+            desc_text = scrolledtext.ScrolledText(add_dialog, width=40, height=5)
+            desc_text.grid(row=1, column=1, sticky=tk.W, padx=10, pady=10)
+            
+            ttk.Label(add_dialog, text="Date:", font=('TkDefaultFont', 9, 'bold')).grid(row=2, column=0, sticky=tk.W, padx=10, pady=10)
+            date_frame = ttk.Frame(add_dialog)
+            date_frame.grid(row=2, column=1, sticky=tk.W, padx=10, pady=10)
+            
+            date_entry = ttk.Entry(date_frame, width=15)
+            date_entry.pack(side=tk.LEFT, padx=(0, 5))
+            date_entry.insert(0, datetime.now().strftime('%Y-%m-%d'))
+            
+            def open_milestone_calendar():
+                """Open calendar picker for milestone date."""
+                cal_window = tk.Toplevel(add_dialog)
+                cal_window.title("Select Date")
+                cal_window.geometry("300x300")
+                cal_window.resizable(False, False)
+                
+                try:
+                    current_date = datetime.strptime(date_entry.get(), '%Y-%m-%d').date()
+                except:
+                    current_date = datetime.now().date()
+                
+                cal = Calendar(cal_window, selectmode='day', 
+                              year=current_date.year, 
+                              month=current_date.month, 
+                              day=current_date.day,
+                              date_pattern='yyyy-mm-dd',
+                              foreground='black',
+                              background='white',
+                              headersforeground='black',
+                              headersbackground='lightgray',
+                              normalforeground='black',
+                              normalbackground='white',
+                              weekendforeground='black',
+                              weekendbackground='white')
+                cal.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
+                
+                def select_date():
+                    selected = cal.get_date()
+                    date_entry.delete(0, tk.END)
+                    date_entry.insert(0, selected)
+                    cal_window.destroy()
+                
+                btn_frame_cal = ttk.Frame(cal_window)
+                btn_frame_cal.pack(pady=5)
+                ttk.Button(btn_frame_cal, text="Select", command=select_date).pack(side=tk.LEFT, padx=5)
+                ttk.Button(btn_frame_cal, text="Cancel", command=cal_window.destroy).pack(side=tk.LEFT, padx=5)
+                
+                cal_window.transient(add_dialog)
+                cal_window.grab_set()
+            
+            ttk.Button(date_frame, text="📅", width=3, command=open_milestone_calendar).pack(side=tk.LEFT)
+            
+            def save_new_milestone():
+                """Save the new milestone."""
+                name = name_entry.get().strip()
+                description = desc_text.get('1.0', tk.END).strip()
+                date_str = date_entry.get().strip()
+                
+                if not name:
+                    messagebox.showwarning("Missing Data", "Milestone name is required!")
+                    return
+                
+                if not date_str:
+                    messagebox.showwarning("Missing Data", "Date is required!")
+                    return
+                
+                # Validate date
+                try:
+                    datetime.strptime(date_str, '%Y-%m-%d')
+                except ValueError:
+                    messagebox.showwarning("Invalid Date", "Please enter date in YYYY-MM-DD format")
+                    return
+                
+                try:
+                    self.db.add_milestone({
+                        'name': name,
+                        'description': description,
+                        'date': date_str
+                    })
+                    messagebox.showinfo("Success", "Milestone added successfully!")
+                    add_dialog.destroy()
+                    load_milestones()  # Refresh the list
+                    self.update_roadmap()  # Update roadmap
+                except Exception as e:
+                    messagebox.showerror("Error", f"Failed to add milestone: {str(e)}")
+            
+            # Buttons
+            btn_frame_add = ttk.Frame(add_dialog)
+            btn_frame_add.grid(row=3, column=0, columnspan=2, pady=15)
+            
+            ttk.Button(btn_frame_add, text="Save", command=save_new_milestone).pack(side=tk.LEFT, padx=5)
+            ttk.Button(btn_frame_add, text="Cancel", command=add_dialog.destroy).pack(side=tk.LEFT, padx=5)
+            
+            # Make dialog modal
+            add_dialog.transient(dialog)
+            add_dialog.grab_set()
+        
+        ttk.Button(btn_frame, text="Add New", command=add_new_milestone).pack(side=tk.LEFT, padx=5)
         ttk.Button(btn_frame, text="View Details", command=view_selected).pack(side=tk.LEFT, padx=5)
         ttk.Button(btn_frame, text="Delete", command=delete_selected).pack(side=tk.LEFT, padx=5)
         ttk.Button(btn_frame, text="Close", command=dialog.destroy).pack(side=tk.RIGHT, padx=5)
