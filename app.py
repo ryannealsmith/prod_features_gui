@@ -632,6 +632,9 @@ class ProductFeaturesApp:
         ttk.Button(control_frame, text="Add Milestone",
                   command=self.add_milestone).pack(side=tk.LEFT, padx=5)
         
+        ttk.Button(control_frame, text="Manage Milestones",
+                  command=self.manage_milestones).pack(side=tk.LEFT, padx=5)
+        
         # Canvas for matplotlib
         self.roadmap_frame = ttk.Frame(tab)
         self.roadmap_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
@@ -1863,6 +1866,113 @@ class ProductFeaturesApp:
         
         ttk.Button(btn_frame, text="Save", command=save_milestone).pack(side=tk.LEFT, padx=5)
         ttk.Button(btn_frame, text="Cancel", command=dialog.destroy).pack(side=tk.LEFT, padx=5)
+        
+        # Make dialog modal
+        dialog.transient(self.root)
+        dialog.grab_set()
+    
+    def manage_milestones(self):
+        """Manage existing milestones - view, edit, and delete."""
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Manage Milestones")
+        dialog.geometry("700x400")
+        
+        # Create frame for list
+        list_frame = ttk.LabelFrame(dialog, text="Existing Milestones", padding=10)
+        list_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Create treeview to display milestones
+        columns = ('name', 'date', 'description')
+        tree = ttk.Treeview(list_frame, columns=columns, show='headings', height=12)
+        
+        tree.heading('name', text='Milestone Name')
+        tree.heading('date', text='Date')
+        tree.heading('description', text='Description')
+        
+        tree.column('name', width=200)
+        tree.column('date', width=100)
+        tree.column('description', width=350)
+        
+        # Scrollbar
+        scrollbar = ttk.Scrollbar(list_frame, orient=tk.VERTICAL, command=tree.yview)
+        tree.configure(yscrollcommand=scrollbar.set)
+        
+        tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        # Load milestones
+        def load_milestones():
+            """Load milestones into the tree."""
+            for item in tree.get_children():
+                tree.delete(item)
+            
+            milestones = self.db.get_milestones()
+            for milestone in milestones:
+                desc = milestone.get('description', '')
+                desc_short = desc[:50] + '...' if len(desc) > 50 else desc
+                tree.insert('', tk.END, iid=milestone['id'],
+                           values=(milestone['name'], milestone['date'], desc_short))
+        
+        load_milestones()
+        
+        # Buttons frame
+        btn_frame = ttk.Frame(dialog)
+        btn_frame.pack(fill=tk.X, padx=10, pady=10)
+        
+        def delete_selected():
+            """Delete the selected milestone."""
+            selection = tree.selection()
+            if not selection:
+                messagebox.showwarning("No Selection", "Please select a milestone to delete.")
+                return
+            
+            milestone_id = int(selection[0])
+            milestone = self.db.get_milestone_by_id(milestone_id)
+            
+            if messagebox.askyesno("Confirm Delete", 
+                                   f"Are you sure you want to delete milestone '{milestone['name']}'?"):
+                try:
+                    self.db.delete_milestone(milestone_id)
+                    messagebox.showinfo("Success", "Milestone deleted successfully!")
+                    load_milestones()
+                    self.update_roadmap()
+                except Exception as e:
+                    messagebox.showerror("Error", f"Failed to delete milestone: {str(e)}")
+        
+        def view_selected():
+            """View details of selected milestone."""
+            selection = tree.selection()
+            if not selection:
+                messagebox.showwarning("No Selection", "Please select a milestone to view.")
+                return
+            
+            milestone_id = int(selection[0])
+            milestone = self.db.get_milestone_by_id(milestone_id)
+            
+            # Create detail dialog
+            detail_dialog = tk.Toplevel(dialog)
+            detail_dialog.title("Milestone Details")
+            detail_dialog.geometry("450x300")
+            
+            ttk.Label(detail_dialog, text="Name:", font=('TkDefaultFont', 9, 'bold')).grid(row=0, column=0, sticky=tk.W, padx=10, pady=10)
+            ttk.Label(detail_dialog, text=milestone['name']).grid(row=0, column=1, sticky=tk.W, padx=10, pady=10)
+            
+            ttk.Label(detail_dialog, text="Date:", font=('TkDefaultFont', 9, 'bold')).grid(row=1, column=0, sticky=tk.W, padx=10, pady=10)
+            ttk.Label(detail_dialog, text=milestone['date']).grid(row=1, column=1, sticky=tk.W, padx=10, pady=10)
+            
+            ttk.Label(detail_dialog, text="Description:", font=('TkDefaultFont', 9, 'bold')).grid(row=2, column=0, sticky=tk.NW, padx=10, pady=10)
+            desc_text = scrolledtext.ScrolledText(detail_dialog, width=40, height=8, wrap=tk.WORD)
+            desc_text.grid(row=2, column=1, sticky=tk.W, padx=10, pady=10)
+            desc_text.insert('1.0', milestone.get('description', ''))
+            desc_text.config(state='disabled')
+            
+            ttk.Button(detail_dialog, text="Close", command=detail_dialog.destroy).grid(row=3, column=1, sticky=tk.E, padx=10, pady=10)
+            
+            detail_dialog.transient(dialog)
+        
+        ttk.Button(btn_frame, text="View Details", command=view_selected).pack(side=tk.LEFT, padx=5)
+        ttk.Button(btn_frame, text="Delete", command=delete_selected).pack(side=tk.LEFT, padx=5)
+        ttk.Button(btn_frame, text="Close", command=dialog.destroy).pack(side=tk.RIGHT, padx=5)
         
         # Make dialog modal
         dialog.transient(self.root)
