@@ -509,6 +509,17 @@ class Database:
             ORDER BY pf.label
         ''', (cap_id,))
         return [dict(row) for row in cursor.fetchall()]
+    
+    def get_tf_capabilities(self, tf_id: int) -> List[Dict]:
+        """Get all capabilities for a technical function."""
+        cursor = self.connection.cursor()
+        cursor.execute('''
+            SELECT c.* FROM capabilities c
+            JOIN cap_technical_functions ctf ON c.id = ctf.capability_id
+            WHERE ctf.technical_function_id = ?
+            ORDER BY c.label
+        ''', (tf_id,))
+        return [dict(row) for row in cursor.fetchall()]
         
     def get_unique_values(self, table: str, column: str) -> List[str]:
         """Get unique values from a column for filter dropdowns."""

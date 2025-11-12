@@ -408,6 +408,22 @@ class ProductFeaturesApp:
         self.tf_form['details'].grid(row=row, column=1, sticky=tk.EW, pady=3)
         row += 1
         
+        # Capabilities section
+        ttk.Label(detail_frame, text="Enabled Capabilities:").grid(row=row, column=0, sticky=tk.NW, pady=3)
+        
+        cap_frame = ttk.Frame(detail_frame)
+        cap_frame.grid(row=row, column=1, sticky=tk.EW, pady=3)
+        
+        cap_scroll = ttk.Scrollbar(cap_frame)
+        cap_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        self.tf_caps_list = tk.Listbox(cap_frame, height=6, 
+                                        yscrollcommand=cap_scroll.set)
+        self.tf_caps_list.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        cap_scroll.config(command=self.tf_caps_list.yview)
+        row += 1
+        
+        # Save button
         ttk.Button(detail_frame, text="Save Changes",
                   command=self.save_technical_function).grid(row=row, column=1, sticky=tk.E, pady=10)
         
@@ -1163,6 +1179,12 @@ class ProductFeaturesApp:
                 widget.delete(0, tk.END)
                 if tf.get(field_name):
                     widget.insert(0, str(tf[field_name]))
+        
+        # Load linked Capabilities
+        self.tf_caps_list.delete(0, tk.END)
+        caps = self.db.get_tf_capabilities(self.current_tf_id)
+        for cap in caps:
+            self.tf_caps_list.insert(tk.END, f"{cap['label']}: {cap['name']}")
     
     def save_technical_function(self):
         """Save Technical Function changes."""
