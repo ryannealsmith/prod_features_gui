@@ -460,10 +460,32 @@ class ProductFeaturesApp:
         self.rm_trailer.grid(row=row, column=3, sticky=tk.W, padx=5, pady=3)
         row += 1
         
+        # Query mode selection
+        ttk.Label(filter_frame, text="Query Mode:", font=('TkDefaultFont', 9, 'bold')).grid(row=row, column=0, sticky=tk.W, padx=5, pady=3)
+        self.rm_query_mode = tk.StringVar(value='date')
+        ttk.Radiobutton(filter_frame, text="By Date (show TRL achieved)", 
+                       variable=self.rm_query_mode, value='date',
+                       command=self.on_rm_query_mode_change).grid(row=row, column=1, sticky=tk.W, padx=5, pady=3)
+        ttk.Radiobutton(filter_frame, text="By TRL Level (show dates)", 
+                       variable=self.rm_query_mode, value='trl',
+                       command=self.on_rm_query_mode_change).grid(row=row, column=2, columnspan=2, sticky=tk.W, padx=5, pady=3)
+        row += 1
+        
+        # Date query field
         ttk.Label(filter_frame, text="Query Date:").grid(row=row, column=0, sticky=tk.W, padx=5, pady=3)
         self.rm_date = ttk.Entry(filter_frame, width=27)
         self.rm_date.grid(row=row, column=1, sticky=tk.W, padx=5, pady=3)
-        ttk.Label(filter_frame, text="(YYYY-MM-DD)", font=('TkDefaultFont', 8, 'italic')).grid(row=row, column=1, sticky=tk.E, padx=5, pady=3)
+        self.rm_date_label = ttk.Label(filter_frame, text="(YYYY-MM-DD)", font=('TkDefaultFont', 8, 'italic'))
+        self.rm_date_label.grid(row=row, column=1, sticky=tk.E, padx=5, pady=3)
+        row += 1
+        
+        # TRL level query field
+        ttk.Label(filter_frame, text="Query TRL Level:").grid(row=row, column=0, sticky=tk.W, padx=5, pady=3)
+        self.rm_trl = ttk.Combobox(filter_frame, state='readonly', width=25, 
+                                    values=['TRL 3', 'TRL 6', 'TRL 9'])
+        self.rm_trl.grid(row=row, column=1, sticky=tk.W, padx=5, pady=3)
+        self.rm_trl_label = ttk.Label(filter_frame, text="(Select TRL level to query)", font=('TkDefaultFont', 8, 'italic'))
+        self.rm_trl_label.grid(row=row, column=1, sticky=tk.E, padx=5, pady=3)
         row += 1
         
         btn_frame = ttk.Frame(filter_frame)
@@ -565,6 +587,9 @@ class ProductFeaturesApp:
         results_notebook.bind('<<NotebookTabChanged>>', self.on_rm_tab_changed)
         
         self.load_readiness_filters()
+        
+        # Initialize query mode fields state
+        self.on_rm_query_mode_change()
     
     def create_roadmap_tab(self):
         """Create Roadmap visualization."""
@@ -1282,7 +1307,20 @@ class ProductFeaturesApp:
         self.rm_environment.set('')
         self.rm_trailer.set('')
         self.rm_date.delete(0, tk.END)
+        self.rm_trl.set('')
         self.apply_readiness_query()
+    
+    def on_rm_query_mode_change(self):
+        """Handle query mode change to enable/disable appropriate fields."""
+        mode = self.rm_query_mode.get()
+        if mode == 'date':
+            # Enable date field, disable TRL field
+            self.rm_date.config(state='normal')
+            self.rm_trl.config(state='disabled')
+        else:  # mode == 'trl'
+            # Disable date field, enable TRL field
+            self.rm_date.config(state='disabled')
+            self.rm_trl.config(state='readonly')
     
     def apply_readiness_query(self):
         """Apply Readiness Matrix query."""
@@ -1294,14 +1332,33 @@ class ProductFeaturesApp:
         for item in self.rm_cap_tree.get_children():
             self.rm_cap_tree.delete(item)
         
-        # Get query date
-        query_date_str = self.rm_date.get().strip()
-        query_date = None
-        if query_date_str:
-            try:
-                query_date = datetime.strptime(query_date_str, '%Y-%m-%d').date()
-            except ValueError:
-                messagebox.showwarning("Invalid Date", "Please enter date in YYYY-MM-DD format")
+        # Determine query mode
+        query_mode = self.rm_query_mode.get()
+        
+        # Update column headers based on mode
+        if query_mode == 'date':
+            # Date mode: show TRL achieved
+            self.rm_pf_tree.heading('TRL Achieved', text='TRL Achieved')
+            self.rm_cap_tree.heading('TRL Achieved', text='TRL Achieved')
+            
+            # Get query date
+            query_date_str = self.rm_date.get().strip()
+            query_date = None
+            if query_date_str:
+                try:
+                    query_date = datetime.strptime(query_date_str, '%Y-%m-%d').date()
+                except ValueError:
+                    messagebox.showwarning("Invalid Date", "Please enter date in YYYY-MM-DD format")
+                    return
+        else:  # TRL mode
+            # TRL mode: show dates when TRL is achieved
+            self.rm_pf_tree.heading('TRL Achieved', text='Date Achieved')
+            self.rm_cap_tree.heading('TRL Achieved', text='Date Achieved')
+            
+            # Get query TRL level
+            query_trl = self.rm_trl.get().strip()
+            if not query_trl:
+                messagebox.showwarning("No TRL Selected", "Please select a TRL level to query")
                 return
         
         # Build filters
@@ -1325,8 +1382,9 @@ class ProductFeaturesApp:
         if self.rm_trailer.get():
             cap_filters['trailer'] = self.rm_trailer.get()
         
-        # Helper function to calculate TRL achieved
+        # Helper functions
         def calculate_trl_achieved(trl3_date, trl6_date, trl9_date, query_date):
+            """Calculate TRL achieved by a given date."""
             if not query_date:
                 return 'N/A'
             
@@ -1345,19 +1403,22 @@ class ProductFeaturesApp:
             else:
                 return 'Not Started'
         
+        def get_trl_date(trl3_date, trl6_date, trl9_date, query_trl):
+            """Get the date when a specific TRL level is achieved."""
+            if query_trl == 'TRL 3':
+                return trl3_date if trl3_date else 'Not Planned'
+            elif query_trl == 'TRL 6':
+                return trl6_date if trl6_date else 'Not Planned'
+            elif query_trl == 'TRL 9':
+                return trl9_date if trl9_date else 'Not Planned'
+            return 'N/A'
+        
         # Load Product Features
         pfs = self.db.get_product_features(pf_filters)
         print(f"DEBUG: Found {len(pfs)} product features matching filters: {pf_filters}")
         
         for pf in pfs:
             try:
-                trl_achieved = calculate_trl_achieved(
-                    pf.get('trl3_date'), 
-                    pf.get('trl6_date'), 
-                    pf.get('trl9_date'),
-                    query_date
-                )
-                
                 # Determine if required (using when_date field)
                 required = 'Yes' if pf.get('when_date') else 'N/A'
                 
@@ -1373,19 +1434,38 @@ class ProductFeaturesApp:
                 else:
                     required_display = '⚪ N/A'
                 
-                # TRL: ⚪ = grey (Not Started), 🔴 = red (TRL 3), 🟠 = amber (TRL 6), 🟢 = green (TRL 9)
-                if trl_achieved == 'TRL 9':
-                    trl_display = '🟢 TRL 9'
-                elif trl_achieved == 'TRL 6':
-                    trl_display = '🟠 TRL 6'
-                elif trl_achieved == 'TRL 3':
-                    trl_display = '🔴 TRL 3'
+                # Calculate result based on query mode
+                if query_mode == 'date':
+                    # Date mode: show TRL achieved
+                    trl_achieved = calculate_trl_achieved(
+                        pf.get('trl3_date'), 
+                        pf.get('trl6_date'), 
+                        pf.get('trl9_date'),
+                        query_date
+                    )
+                    
+                    # TRL: ⚪ = grey (Not Started), 🔴 = red (TRL 3), 🟠 = amber (TRL 6), 🟢 = green (TRL 9)
+                    if trl_achieved == 'TRL 9':
+                        result_display = '🟢 TRL 9'
+                    elif trl_achieved == 'TRL 6':
+                        result_display = '🟠 TRL 6'
+                    elif trl_achieved == 'TRL 3':
+                        result_display = '🔴 TRL 3'
+                    else:
+                        result_display = '⚪ Not Started'
                 else:
-                    trl_display = '⚪ Not Started'
+                    # TRL mode: show date when TRL is achieved
+                    trl_date = get_trl_date(
+                        pf.get('trl3_date'),
+                        pf.get('trl6_date'),
+                        pf.get('trl9_date'),
+                        query_trl
+                    )
+                    result_display = trl_date if trl_date != 'Not Planned' else '⚪ Not Planned'
                 
                 print(f"DEBUG: Inserting PF {pf['label']}: {pf['name'][:30]}")
                 self.rm_pf_tree.insert('', tk.END,
-                                       values=(pf['label'], pf['name'], description, required_display, trl_display))
+                                       values=(pf['label'], pf['name'], description, required_display, result_display))
             except Exception as e:
                 print(f"Error processing product feature {pf.get('label', 'UNKNOWN')}: {e}")
                 import traceback
@@ -1404,13 +1484,6 @@ class ProductFeaturesApp:
         print(f"DEBUG: Found {len(caps)} capabilities matching filters: {cap_filters}")
         for cap in caps:
             try:
-                trl_achieved = calculate_trl_achieved(
-                    cap.get('trl3_date'), 
-                    cap.get('trl6_date'), 
-                    cap.get('trl9_date'),
-                    query_date
-                )
-                
                 # Determine if required (using when_date field)
                 required = 'Yes' if cap.get('when_date') else 'N/A'
                 
@@ -1426,18 +1499,40 @@ class ProductFeaturesApp:
                 else:
                     required_display = '⚪ N/A'
                 
-                # TRL: ⚪ = grey (Not Started), 🔴 = red (TRL 3), 🟠 = amber (TRL 6), 🟢 = green (TRL 9)
-                if trl_achieved == 'TRL 9':
-                    trl_display = '🟢 TRL 9'
-                elif trl_achieved == 'TRL 6':
-                    trl_display = '🟠 TRL 6'
-                elif trl_achieved == 'TRL 3':
-                    trl_display = '🔴 TRL 3'
+                # Calculate result based on query mode
+                if query_mode == 'date':
+                    # Date mode: show TRL achieved
+                    trl_achieved = calculate_trl_achieved(
+                        cap.get('trl3_date'), 
+                        cap.get('trl6_date'), 
+                        cap.get('trl9_date'),
+                        query_date
+                    )
+                    
+                    # TRL: ⚪ = grey (Not Started), 🔴 = red (TRL 3), 🟠 = amber (TRL 6), 🟢 = green (TRL 9)
+                    if trl_achieved == 'TRL 9':
+                        result_display = '🟢 TRL 9'
+                    elif trl_achieved == 'TRL 6':
+                        result_display = '🟠 TRL 6'
+                    elif trl_achieved == 'TRL 3':
+                        result_display = '🔴 TRL 3'
+                    else:
+                        result_display = '⚪ Not Started'
                 else:
-                    trl_display = '⚪ Not Started'
+                    # TRL mode: show date when TRL is achieved
+                    trl_date = get_trl_date(
+                        cap.get('trl3_date'),
+                        cap.get('trl6_date'),
+                        cap.get('trl9_date'),
+                        query_trl
+                    )
+                    result_display = trl_date if trl_date != 'Not Planned' else '⚪ Not Planned'
                 
                 self.rm_cap_tree.insert('', tk.END,
-                                        values=(cap['label'], cap['name'], description, required_display, trl_display))
+                                        values=(cap['label'], cap['name'], description, required_display, result_display))
+                
+                self.rm_cap_tree.insert('', tk.END,
+                                        values=(cap['label'], cap['name'], description, required_display, result_display))
             except Exception as e:
                 print(f"Error processing capability {cap.get('label', 'UNKNOWN')}: {e}")
                 # Still insert the row with basic info
@@ -1446,13 +1541,21 @@ class ProductFeaturesApp:
                                                cap.get('details', '')[:50] if cap.get('details') else '', 
                                                'N/A', 'Error'))
         
-        # Store results for pie chart updates
-        self.rm_last_pfs = pfs
-        self.rm_last_caps = caps
-        self.rm_last_query_date = query_date
-        
-        # Update pie chart based on current tab
-        self.update_readiness_pie_chart(pfs, caps, query_date)
+        # Store results for pie chart updates (only in date mode)
+        if query_mode == 'date':
+            self.rm_last_pfs = pfs
+            self.rm_last_caps = caps
+            self.rm_last_query_date = query_date
+            
+            # Update pie chart based on current tab
+            self.update_readiness_pie_chart(pfs, caps, query_date)
+        else:
+            # In TRL mode, pie chart doesn't make sense, so clear it
+            for widget in self.rm_chart_frame.winfo_children():
+                widget.destroy()
+            label = tk.Label(self.rm_chart_frame, text="Pie chart only available in Date mode", 
+                           font=('TkDefaultFont', 10))
+            label.pack(expand=True)
     
     def on_rm_tab_changed(self, event):
         """Handle readiness matrix tab change to update pie chart."""
