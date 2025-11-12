@@ -3,6 +3,7 @@ Main GUI application for Product Features management.
 """
 import tkinter as tk
 from tkinter import ttk, messagebox, scrolledtext, filedialog
+from tkcalendar import Calendar
 from database import Database
 from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
@@ -471,12 +472,16 @@ class ProductFeaturesApp:
                        command=self.on_rm_query_mode_change).grid(row=row, column=2, columnspan=2, sticky=tk.W, padx=5, pady=3)
         row += 1
         
-        # Date query field
+        # Date query field with calendar picker button
         ttk.Label(filter_frame, text="Query Date:").grid(row=row, column=0, sticky=tk.W, padx=5, pady=3)
-        self.rm_date = ttk.Entry(filter_frame, width=27)
-        self.rm_date.grid(row=row, column=1, sticky=tk.W, padx=5, pady=3)
-        self.rm_date_label = ttk.Label(filter_frame, text="(YYYY-MM-DD)", font=('TkDefaultFont', 8, 'italic'))
-        self.rm_date_label.grid(row=row, column=1, sticky=tk.E, padx=5, pady=3)
+        date_frame = ttk.Frame(filter_frame)
+        date_frame.grid(row=row, column=1, sticky=tk.W, padx=5, pady=3)
+        
+        self.rm_date = ttk.Entry(date_frame, width=15)
+        self.rm_date.pack(side=tk.LEFT, padx=(0, 5))
+        self.rm_date.insert(0, datetime.now().strftime('%Y-%m-%d'))
+        
+        ttk.Button(date_frame, text="📅", width=3, command=self.open_calendar_picker).pack(side=tk.LEFT)
         row += 1
         
         # TRL level query field
@@ -1310,6 +1315,54 @@ class ProductFeaturesApp:
         self.rm_trl.set('')
         self.apply_readiness_query()
     
+    def open_calendar_picker(self):
+        """Open a calendar dialog to select a date."""
+        # Create a new top-level window
+        cal_window = tk.Toplevel(self.root)
+        cal_window.title("Select Date")
+        cal_window.geometry("300x300")
+        cal_window.resizable(False, False)
+        
+        # Get current date from entry field or use today
+        try:
+            current_date = datetime.strptime(self.rm_date.get(), '%Y-%m-%d').date()
+        except:
+            current_date = datetime.now().date()
+        
+        # Create calendar widget with black text and light background
+        cal = Calendar(cal_window, selectmode='day', 
+                      year=current_date.year, 
+                      month=current_date.month, 
+                      day=current_date.day,
+                      date_pattern='yyyy-mm-dd',
+                      foreground='black',
+                      background='white',
+                      headersforeground='black',
+                      headersbackground='lightgray',
+                      normalforeground='black',
+                      normalbackground='white',
+                      weekendforeground='black',
+                      weekendbackground='white')
+        cal.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
+        
+        def select_date():
+            """Set the selected date and close the window."""
+            selected = cal.get_date()
+            self.rm_date.delete(0, tk.END)
+            self.rm_date.insert(0, selected)
+            cal_window.destroy()
+        
+        # Buttons
+        btn_frame = ttk.Frame(cal_window)
+        btn_frame.pack(pady=5)
+        
+        ttk.Button(btn_frame, text="Select", command=select_date).pack(side=tk.LEFT, padx=5)
+        ttk.Button(btn_frame, text="Cancel", command=cal_window.destroy).pack(side=tk.LEFT, padx=5)
+        
+        # Make the window modal
+        cal_window.transient(self.root)
+        cal_window.grab_set()
+    
     def on_rm_query_mode_change(self):
         """Handle query mode change to enable/disable appropriate fields."""
         mode = self.rm_query_mode.get()
@@ -1318,8 +1371,8 @@ class ProductFeaturesApp:
             self.rm_date.config(state='normal')
             self.rm_trl.config(state='disabled')
         else:  # mode == 'trl'
-            # Disable date field, enable TRL field
-            self.rm_date.config(state='disabled')
+            # Set date field to readonly, enable TRL field
+            self.rm_date.config(state='readonly')
             self.rm_trl.config(state='readonly')
     
     def apply_readiness_query(self):
@@ -1341,7 +1394,7 @@ class ProductFeaturesApp:
             self.rm_pf_tree.heading('TRL Achieved', text='TRL Achieved')
             self.rm_cap_tree.heading('TRL Achieved', text='TRL Achieved')
             
-            # Get query date
+            # Get query date from entry field
             query_date_str = self.rm_date.get().strip()
             query_date = None
             if query_date_str:
