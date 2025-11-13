@@ -131,6 +131,19 @@ class Database:
             )
         ''')
         
+        # Configurations table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS configurations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                config_type TEXT NOT NULL,
+                code TEXT NOT NULL,
+                description TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(config_type, code)
+            )
+        ''')
+        
         # Create indexes for better query performance
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_pf_label ON product_features(label)')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_cap_label ON capabilities(label)')
@@ -139,6 +152,7 @@ class Database:
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_pf_cap_cap ON pf_capabilities(capability_id)')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_cap_tf_cap ON cap_technical_functions(capability_id)')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_cap_tf_tf ON cap_technical_functions(technical_function_id)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_config_type ON configurations(config_type)')
         
         self.connection.commit()
         
@@ -577,4 +591,47 @@ class Database:
         """Delete a milestone."""
         cursor = self.connection.cursor()
         cursor.execute('DELETE FROM milestones WHERE id = ?', (milestone_id,))
+        self.connection.commit()
+    
+    # Configuration CRUD operations
+    def add_configuration(self, data: Dict) -> int:
+        """Add a new configuration."""
+        cursor = self.connection.cursor()
+        cursor.execute('''
+            INSERT INTO configurations (config_type, code, description)
+            VALUES (?, ?, ?)
+        ''', (data.get('config_type'), data.get('code'), data.get('description')))
+        self.connection.commit()
+        return cursor.lastrowid
+    
+    def get_configurations(self, config_type: Optional[str] = None) -> List[Dict]:
+        """Get all configurations, optionally filtered by type."""
+        cursor = self.connection.cursor()
+        if config_type:
+            cursor.execute('SELECT * FROM configurations WHERE config_type = ? ORDER BY code', (config_type,))
+        else:
+            cursor.execute('SELECT * FROM configurations ORDER BY config_type, code')
+        return [dict(row) for row in cursor.fetchall()]
+    
+    def get_configuration_by_id(self, config_id: int) -> Optional[Dict]:
+        """Get a configuration by ID."""
+        cursor = self.connection.cursor()
+        cursor.execute('SELECT * FROM configurations WHERE id = ?', (config_id,))
+        row = cursor.fetchone()
+        return dict(row) if row else None
+    
+    def update_configuration(self, config_id: int, data: Dict):
+        """Update a configuration."""
+        cursor = self.connection.cursor()
+        cursor.execute('''
+            UPDATE configurations 
+            SET config_type = ?, code = ?, description = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        ''', (data.get('config_type'), data.get('code'), data.get('description'), config_id))
+        self.connection.commit()
+    
+    def delete_configuration(self, config_id: int):
+        """Delete a configuration."""
+        cursor = self.connection.cursor()
+        cursor.execute('DELETE FROM configurations WHERE id = ?', (config_id,))
         self.connection.commit()

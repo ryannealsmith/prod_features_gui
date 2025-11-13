@@ -37,12 +37,13 @@ class ProductFeaturesApp:
         self.notebook.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
         
         # Create tabs
+        self.create_configurations_tab()
         self.create_product_features_tab()
         self.create_capabilities_tab()
         self.create_technical_functions_tab()
         self.create_readiness_matrix_tab()
         self.create_roadmap_tab()
-        
+    
     def create_product_features_tab(self):
         """Create tab for managing Product Features."""
         tab = ttk.Frame(self.notebook)
@@ -639,6 +640,282 @@ class ProductFeaturesApp:
         # Load filter options
         self.load_roadmap_filters()
         self.update_roadmap()
+    
+    def create_configurations_tab(self):
+        """Create tab for managing configuration options."""
+        tab = ttk.Frame(self.notebook)
+        self.notebook.add(tab, text="Configurations")
+        
+        # Split into two panes: type selector on left, items on right
+        paned = ttk.PanedWindow(tab, orient=tk.HORIZONTAL)
+        paned.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        
+        # Left pane - configuration type selector
+        left_frame = ttk.Frame(paned)
+        paned.add(left_frame, weight=1)
+        
+        ttk.Label(left_frame, text="Configuration Types", 
+                 font=('TkDefaultFont', 12, 'bold')).pack(pady=10)
+        
+        # Listbox for configuration types
+        type_frame = ttk.Frame(left_frame)
+        type_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        
+        type_scroll = ttk.Scrollbar(type_frame)
+        type_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        self.config_type_listbox = tk.Listbox(type_frame, yscrollcommand=type_scroll.set,
+                                              font=('TkDefaultFont', 10))
+        type_scroll.config(command=self.config_type_listbox.yview)
+        self.config_type_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        
+        # Configuration types
+        self.config_types = [
+            ('Platform', 'Vehicle platforms supported by the system'),
+            ('ODD', 'Operational Design Domains'),
+            ('Environment', 'Deployment environments'),
+            ('Trailer', 'Trailer types and configurations'),
+            ('TRL', 'Technology Readiness Levels')
+        ]
+        
+        for config_type, description in self.config_types:
+            self.config_type_listbox.insert(tk.END, config_type)
+        
+        self.config_type_listbox.bind('<<ListboxSelect>>', self.on_config_type_select)
+        
+        # Right pane - configuration items
+        right_frame = ttk.Frame(paned)
+        paned.add(right_frame, weight=3)
+        
+        # Title and description
+        self.config_title_label = ttk.Label(right_frame, text="Select a configuration type", 
+                                           font=('TkDefaultFont', 12, 'bold'))
+        self.config_title_label.pack(pady=(10, 0))
+        
+        self.config_desc_label = ttk.Label(right_frame, text="", 
+                                          font=('TkDefaultFont', 9, 'italic'),
+                                          foreground='#666666')
+        self.config_desc_label.pack(pady=(0, 10))
+        
+        # Toolbar
+        toolbar = ttk.Frame(right_frame)
+        toolbar.pack(fill=tk.X, padx=5, pady=5)
+        
+        ttk.Button(toolbar, text="Add New", command=self.add_configuration).pack(side=tk.LEFT, padx=2)
+        ttk.Button(toolbar, text="Edit Selected", command=self.edit_configuration).pack(side=tk.LEFT, padx=2)
+        ttk.Button(toolbar, text="Delete Selected", command=self.delete_configuration).pack(side=tk.LEFT, padx=2)
+        
+        # Configuration items list
+        list_frame = ttk.Frame(right_frame)
+        list_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        
+        scroll = ttk.Scrollbar(list_frame)
+        scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        self.config_tree = ttk.Treeview(list_frame,
+                                        columns=('Code', 'Description'),
+                                        show='tree headings',
+                                        yscrollcommand=scroll.set)
+        scroll.config(command=self.config_tree.yview)
+        
+        self.config_tree.heading('Code', text='Code')
+        self.config_tree.heading('Description', text='Description')
+        
+        self.config_tree.column('#0', width=0, stretch=False)
+        self.config_tree.column('Code', width=150)
+        self.config_tree.column('Description', width=400)
+        
+        self.config_tree.pack(fill=tk.BOTH, expand=True)
+        
+        # Note at bottom
+        note_label = ttk.Label(right_frame, 
+                              text="Configuration values are used throughout the system for filtering and categorization.",
+                              font=('TkDefaultFont', 9),
+                              foreground='#333333')
+        note_label.pack(pady=5)
+        
+        # Select first type by default
+        self.config_type_listbox.selection_set(0)
+        self.on_config_type_select(None)
+    
+    def on_config_type_select(self, event):
+        """Handle configuration type selection."""
+        selection = self.config_type_listbox.curselection()
+        if not selection:
+            return
+        
+        idx = selection[0]
+        config_type, description = self.config_types[idx]
+        
+        self.config_title_label.config(text=config_type + 's')
+        self.config_desc_label.config(text=description)
+        
+        # Load configurations of this type
+        self.load_configurations(config_type)
+    
+    def load_configurations(self, config_type):
+        """Load configurations from database for the selected type."""
+        # Clear existing items
+        for item in self.config_tree.get_children():
+            self.config_tree.delete(item)
+        
+        # Get configurations from database
+        configs = self.db.get_configurations(config_type)
+        
+        for config in configs:
+            self.config_tree.insert('', tk.END, iid=config['id'],
+                                   values=(config['code'], config['description']))
+    
+    def add_configuration(self):
+        """Add a new configuration."""
+        selection = self.config_type_listbox.curselection()
+        if not selection:
+            messagebox.showwarning("No Type Selected", "Please select a configuration type first.")
+            return
+        
+        idx = selection[0]
+        config_type, _ = self.config_types[idx]
+        
+        # Create dialog
+        dialog = tk.Toplevel(self.root)
+        dialog.title(f"Add {config_type}")
+        dialog.geometry("500x250")
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # Form
+        form_frame = ttk.Frame(dialog, padding=20)
+        form_frame.pack(fill=tk.BOTH, expand=True)
+        
+        ttk.Label(form_frame, text="Code:", font=('TkDefaultFont', 10, 'bold')).grid(row=0, column=0, sticky=tk.W, pady=5)
+        code_entry = ttk.Entry(form_frame, width=40)
+        code_entry.grid(row=0, column=1, sticky=tk.EW, pady=5, padx=(10, 0))
+        
+        ttk.Label(form_frame, text="Description:", font=('TkDefaultFont', 10, 'bold')).grid(row=1, column=0, sticky=tk.NW, pady=5)
+        desc_text = tk.Text(form_frame, width=40, height=5, wrap=tk.WORD)
+        desc_text.grid(row=1, column=1, sticky=tk.EW, pady=5, padx=(10, 0))
+        
+        form_frame.columnconfigure(1, weight=1)
+        
+        # Buttons
+        button_frame = ttk.Frame(dialog, padding=(20, 0, 20, 20))
+        button_frame.pack(fill=tk.X)
+        
+        def save():
+            code = code_entry.get().strip()
+            description = desc_text.get('1.0', tk.END).strip()
+            
+            if not code or not description:
+                messagebox.showwarning("Missing Information", "Please fill in all fields.")
+                return
+            
+            try:
+                self.db.add_configuration({
+                    'config_type': config_type,
+                    'code': code,
+                    'description': description
+                })
+                self.load_configurations(config_type)
+                dialog.destroy()
+                messagebox.showinfo("Success", f"{config_type} added successfully!")
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to add {config_type}: {str(e)}")
+        
+        ttk.Button(button_frame, text="Save", command=save).pack(side=tk.RIGHT, padx=5)
+        ttk.Button(button_frame, text="Cancel", command=dialog.destroy).pack(side=tk.RIGHT)
+        
+        code_entry.focus()
+    
+    def edit_configuration(self):
+        """Edit the selected configuration."""
+        selection = self.config_tree.selection()
+        if not selection:
+            messagebox.showwarning("No Selection", "Please select a configuration to edit.")
+            return
+        
+        config_id = int(selection[0])
+        config = self.db.get_configuration_by_id(config_id)
+        
+        if not config:
+            messagebox.showerror("Error", "Configuration not found.")
+            return
+        
+        # Create dialog
+        dialog = tk.Toplevel(self.root)
+        dialog.title(f"Edit {config['config_type']}")
+        dialog.geometry("500x250")
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # Form
+        form_frame = ttk.Frame(dialog, padding=20)
+        form_frame.pack(fill=tk.BOTH, expand=True)
+        
+        ttk.Label(form_frame, text="Code:", font=('TkDefaultFont', 10, 'bold')).grid(row=0, column=0, sticky=tk.W, pady=5)
+        code_entry = ttk.Entry(form_frame, width=40)
+        code_entry.insert(0, config['code'])
+        code_entry.grid(row=0, column=1, sticky=tk.EW, pady=5, padx=(10, 0))
+        
+        ttk.Label(form_frame, text="Description:", font=('TkDefaultFont', 10, 'bold')).grid(row=1, column=0, sticky=tk.NW, pady=5)
+        desc_text = tk.Text(form_frame, width=40, height=5, wrap=tk.WORD)
+        desc_text.insert('1.0', config['description'])
+        desc_text.grid(row=1, column=1, sticky=tk.EW, pady=5, padx=(10, 0))
+        
+        form_frame.columnconfigure(1, weight=1)
+        
+        # Buttons
+        button_frame = ttk.Frame(dialog, padding=(20, 0, 20, 20))
+        button_frame.pack(fill=tk.X)
+        
+        def save():
+            code = code_entry.get().strip()
+            description = desc_text.get('1.0', tk.END).strip()
+            
+            if not code or not description:
+                messagebox.showwarning("Missing Information", "Please fill in all fields.")
+                return
+            
+            try:
+                self.db.update_configuration(config_id, {
+                    'config_type': config['config_type'],
+                    'code': code,
+                    'description': description
+                })
+                self.load_configurations(config['config_type'])
+                dialog.destroy()
+                messagebox.showinfo("Success", f"{config['config_type']} updated successfully!")
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to update {config['config_type']}: {str(e)}")
+        
+        ttk.Button(button_frame, text="Save", command=save).pack(side=tk.RIGHT, padx=5)
+        ttk.Button(button_frame, text="Cancel", command=dialog.destroy).pack(side=tk.RIGHT)
+        
+        code_entry.focus()
+    
+    def delete_configuration(self):
+        """Delete the selected configuration."""
+        selection = self.config_tree.selection()
+        if not selection:
+            messagebox.showwarning("No Selection", "Please select a configuration to delete.")
+            return
+        
+        config_id = int(selection[0])
+        config = self.db.get_configuration_by_id(config_id)
+        
+        if not config:
+            messagebox.showerror("Error", "Configuration not found.")
+            return
+        
+        # Confirm deletion
+        if messagebox.askyesno("Confirm Delete", 
+                              f"Are you sure you want to delete '{config['code']}'?\n\n"
+                              f"This action cannot be undone."):
+            try:
+                self.db.delete_configuration(config_id)
+                self.load_configurations(config['config_type'])
+                messagebox.showinfo("Success", f"{config['config_type']} deleted successfully!")
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to delete {config['config_type']}: {str(e)}")
     
     # Data loading methods
     def load_roadmap_filters(self):
