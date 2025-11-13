@@ -15,7 +15,7 @@ import json
 class ProductFeaturesApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Product Features Management System")
+        self.root.title("Product, Capability and Technical Roadmapping Management")
         self.root.geometry("1400x900")
         
         self.db = Database()
