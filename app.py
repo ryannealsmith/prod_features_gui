@@ -125,13 +125,10 @@ class ProductFeaturesApp:
         self.pf_form = {}
         row = 0
         
-        fields = [
+        # Text entry fields
+        text_fields = [
             ('label', 'Label*:', 30),
             ('name', 'Name*:', 50),
-            ('platform', 'Platform:', 30),
-            ('odd', 'ODD:', 30),
-            ('environment', 'Environment:', 30),
-            ('trailer', 'Trailer:', 30),
             ('when_date', 'When:', 30),
             ('start_date', 'Start Date:', 15),
             ('trl3_date', 'TRL3 Date:', 15),
@@ -139,11 +136,27 @@ class ProductFeaturesApp:
             ('trl9_date', 'TRL9 Date:', 15)
         ]
         
-        for field_name, label_text, width in fields:
+        for field_name, label_text, width in text_fields:
             ttk.Label(detail_frame, text=label_text).grid(row=row, column=0, sticky=tk.W, pady=3)
             entry = ttk.Entry(detail_frame, width=width)
             entry.grid(row=row, column=1, sticky=tk.EW, pady=3)
             self.pf_form[field_name] = entry
+            row += 1
+        
+        # Combobox fields for configurations
+        combo_fields = [
+            ('platform', 'Platform:', 'Platform'),
+            ('odd', 'ODD:', 'ODD'),
+            ('environment', 'Environment:', 'Environment'),
+            ('trailer', 'Trailer:', 'Trailer')
+        ]
+        
+        for field_name, label_text, config_type in combo_fields:
+            ttk.Label(detail_frame, text=label_text).grid(row=row, column=0, sticky=tk.W, pady=3)
+            combo = ttk.Combobox(detail_frame, width=27)
+            combo['values'] = [''] + self.get_config_codes(config_type)
+            combo.grid(row=row, column=1, sticky=tk.EW, pady=3)
+            self.pf_form[field_name] = combo
             row += 1
         
         # Text fields
@@ -257,23 +270,31 @@ class ProductFeaturesApp:
         self.cap_form = {}
         row = 0
         
-        fields = [
+        # Text entry fields
+        text_fields = [
             ('label', 'Label*:', 30),
             ('name', 'Name*:', 50),
             ('swimlane', 'Swimlane:', 20),
-            ('platform', 'Platform:', 30),
             ('start_date', 'Start Date:', 15),
             ('trl3_date', 'TRL3 Date:', 15),
             ('trl6_date', 'TRL6 Date:', 15),
             ('trl9_date', 'TRL9 Date:', 15)
         ]
         
-        for field_name, label_text, width in fields:
+        for field_name, label_text, width in text_fields:
             ttk.Label(detail_frame, text=label_text).grid(row=row, column=0, sticky=tk.W, pady=3)
             entry = ttk.Entry(detail_frame, width=width)
             entry.grid(row=row, column=1, sticky=tk.EW, pady=3)
             self.cap_form[field_name] = entry
             row += 1
+        
+        # Combobox field for platform
+        ttk.Label(detail_frame, text='Platform:').grid(row=row, column=0, sticky=tk.W, pady=3)
+        platform_combo = ttk.Combobox(detail_frame, width=27)
+        platform_combo['values'] = [''] + self.get_config_codes('Platform')
+        platform_combo.grid(row=row, column=1, sticky=tk.EW, pady=3)
+        self.cap_form['platform'] = platform_combo
+        row += 1
         
         ttk.Label(detail_frame, text="Details:").grid(row=row, column=0, sticky=tk.NW, pady=3)
         self.cap_form['details'] = scrolledtext.ScrolledText(detail_frame, height=4, width=50)
@@ -391,19 +412,27 @@ class ProductFeaturesApp:
         self.tf_form = {}
         row = 0
         
-        fields = [
+        # Text entry fields
+        text_fields = [
             ('label', 'Label*:', 30),
             ('name', 'Name*:', 50),
-            ('swimlane', 'Swimlane:', 20),
-            ('platform', 'Platform:', 30)
+            ('swimlane', 'Swimlane:', 20)
         ]
         
-        for field_name, label_text, width in fields:
+        for field_name, label_text, width in text_fields:
             ttk.Label(detail_frame, text=label_text).grid(row=row, column=0, sticky=tk.W, pady=3)
             entry = ttk.Entry(detail_frame, width=width)
             entry.grid(row=row, column=1, sticky=tk.EW, pady=3)
             self.tf_form[field_name] = entry
             row += 1
+        
+        # Combobox field for platform
+        ttk.Label(detail_frame, text='Platform:').grid(row=row, column=0, sticky=tk.W, pady=3)
+        platform_combo = ttk.Combobox(detail_frame, width=27)
+        platform_combo['values'] = [''] + self.get_config_codes('Platform')
+        platform_combo.grid(row=row, column=1, sticky=tk.EW, pady=3)
+        self.tf_form['platform'] = platform_combo
+        row += 1
         
         ttk.Label(detail_frame, text="Details:").grid(row=row, column=0, sticky=tk.NW, pady=3)
         self.tf_form['details'] = scrolledtext.ScrolledText(detail_frame, height=4, width=50)
@@ -917,12 +946,18 @@ class ProductFeaturesApp:
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to delete {config['config_type']}: {str(e)}")
     
+    # Helper methods
+    def get_config_codes(self, config_type):
+        """Get configuration codes for a given type."""
+        configs = self.db.get_configurations(config_type)
+        return [c['code'] for c in configs]
+    
     # Data loading methods
     def load_roadmap_filters(self):
         """Load filter options for Roadmap."""
-        platforms = [''] + self.db.get_unique_values('product_features', 'platform')
-        odds = [''] + self.db.get_unique_values('product_features', 'odd')
-        environments = [''] + self.db.get_unique_values('product_features', 'environment')
+        platforms = [''] + self.get_config_codes('Platform')
+        odds = [''] + self.get_config_codes('ODD')
+        environments = [''] + self.get_config_codes('Environment')
         
         self.roadmap_platform['values'] = platforms
         self.roadmap_odd['values'] = odds
@@ -930,7 +965,7 @@ class ProductFeaturesApp:
     
     def load_pf_filters(self):
         """Load filter options for Product Features."""
-        platforms = [''] + self.db.get_unique_values('product_features', 'platform')
+        platforms = [''] + self.get_config_codes('Platform')
         self.pf_platform_filter['values'] = platforms
         
     def clear_pf_filters(self):
@@ -1573,16 +1608,16 @@ class ProductFeaturesApp:
     
     def load_readiness_filters(self):
         """Load filter options for Readiness Matrix."""
-        platforms = [''] + self.db.get_unique_values('product_features', 'platform')
+        platforms = [''] + self.get_config_codes('Platform')
         self.rm_platform['values'] = platforms
         
-        odds = [''] + self.db.get_unique_values('product_features', 'odd')
+        odds = [''] + self.get_config_codes('ODD')
         self.rm_odd['values'] = odds
         
-        envs = [''] + self.db.get_unique_values('product_features', 'environment')
+        envs = [''] + self.get_config_codes('Environment')
         self.rm_environment['values'] = envs
         
-        trailers = [''] + self.db.get_unique_values('product_features', 'trailer')
+        trailers = [''] + self.get_config_codes('Trailer')
         self.rm_trailer['values'] = trailers
     
     def clear_readiness_filters(self):
