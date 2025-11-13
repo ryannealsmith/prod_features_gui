@@ -845,6 +845,7 @@ class ProductFeaturesApp:
                     'description': description
                 })
                 self.load_configurations(config_type)
+                self.refresh_all_config_dropdowns()
                 dialog.destroy()
                 messagebox.showinfo("Success", f"{config_type} added successfully!")
             except Exception as e:
@@ -911,6 +912,7 @@ class ProductFeaturesApp:
                     'description': description
                 })
                 self.load_configurations(config['config_type'])
+                self.refresh_all_config_dropdowns()
                 dialog.destroy()
                 messagebox.showinfo("Success", f"{config['config_type']} updated successfully!")
             except Exception as e:
@@ -942,6 +944,7 @@ class ProductFeaturesApp:
             try:
                 self.db.delete_configuration(config_id)
                 self.load_configurations(config['config_type'])
+                self.refresh_all_config_dropdowns()
                 messagebox.showinfo("Success", f"{config['config_type']} deleted successfully!")
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to delete {config['config_type']}: {str(e)}")
@@ -951,6 +954,40 @@ class ProductFeaturesApp:
         """Get configuration codes for a given type."""
         configs = self.db.get_configurations(config_type)
         return [c['code'] for c in configs]
+    
+    def refresh_all_config_dropdowns(self):
+        """Refresh all configuration-based dropdowns across all tabs."""
+        # Product Features tab
+        platforms = [''] + self.get_config_codes('Platform')
+        odds = [''] + self.get_config_codes('ODD')
+        environments = [''] + self.get_config_codes('Environment')
+        trailers = [''] + self.get_config_codes('Trailer')
+        
+        # Product Features filter
+        self.pf_platform_filter['values'] = platforms
+        
+        # Product Features form
+        self.pf_form['platform']['values'] = platforms
+        self.pf_form['odd']['values'] = odds
+        self.pf_form['environment']['values'] = environments
+        self.pf_form['trailer']['values'] = trailers
+        
+        # Capabilities form
+        self.cap_form['platform']['values'] = platforms
+        
+        # Technical Functions form
+        self.tf_form['platform']['values'] = platforms
+        
+        # Readiness Matrix filters
+        self.rm_platform['values'] = platforms
+        self.rm_odd['values'] = odds
+        self.rm_environment['values'] = environments
+        self.rm_trailer['values'] = trailers
+        
+        # Roadmap filters
+        self.roadmap_platform['values'] = platforms
+        self.roadmap_odd['values'] = odds
+        self.roadmap_environment['values'] = environments
     
     # Data loading methods
     def load_roadmap_filters(self):
