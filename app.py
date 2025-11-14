@@ -131,7 +131,6 @@ class ProductFeaturesApp:
         text_fields = [
             ('label', 'Label*:', 30),
             ('name', 'Name*:', 50),
-            ('swimlane', 'Swimlane:', 20),
             ('when_date', 'When:', 30),
             ('start_date', 'Start Date:', 15),
             ('trl3_date', 'TRL3 Date:', 15),
@@ -148,6 +147,7 @@ class ProductFeaturesApp:
         
         # Combobox fields for configurations
         combo_fields = [
+            ('swimlane', 'Swimlane:', 'Swimlane'),
             ('platform', 'Platform:', 'Platform'),
             ('odd', 'ODD:', 'ODD'),
             ('environment', 'Environment:', 'Environment'),
@@ -277,7 +277,6 @@ class ProductFeaturesApp:
         text_fields = [
             ('label', 'Label*:', 30),
             ('name', 'Name*:', 50),
-            ('swimlane', 'Swimlane:', 20),
             ('start_date', 'Start Date:', 15),
             ('trl3_date', 'TRL3 Date:', 15),
             ('trl6_date', 'TRL6 Date:', 15),
@@ -291,13 +290,19 @@ class ProductFeaturesApp:
             self.cap_form[field_name] = entry
             row += 1
         
-        # Combobox field for platform
-        ttk.Label(detail_frame, text='Platform:').grid(row=row, column=0, sticky=tk.W, pady=3)
-        platform_combo = ttk.Combobox(detail_frame, width=27)
-        platform_combo['values'] = [''] + self.get_config_codes('Platform')
-        platform_combo.grid(row=row, column=1, sticky=tk.EW, pady=3)
-        self.cap_form['platform'] = platform_combo
-        row += 1
+        # Combobox fields for configurations
+        combo_fields = [
+            ('swimlane', 'Swimlane:', 'Swimlane'),
+            ('platform', 'Platform:', 'Platform')
+        ]
+        
+        for field_name, label_text, config_type in combo_fields:
+            ttk.Label(detail_frame, text=label_text).grid(row=row, column=0, sticky=tk.W, pady=3)
+            combo = ttk.Combobox(detail_frame, width=27)
+            combo['values'] = [''] + self.get_config_codes(config_type)
+            combo.grid(row=row, column=1, sticky=tk.EW, pady=3)
+            self.cap_form[field_name] = combo
+            row += 1
         
         ttk.Label(detail_frame, text="Details:").grid(row=row, column=0, sticky=tk.NW, pady=3)
         self.cap_form['details'] = scrolledtext.ScrolledText(detail_frame, height=4, width=50)
@@ -418,8 +423,7 @@ class ProductFeaturesApp:
         # Text entry fields
         text_fields = [
             ('label', 'Label*:', 30),
-            ('name', 'Name*:', 50),
-            ('swimlane', 'Swimlane:', 20)
+            ('name', 'Name*:', 50)
         ]
         
         for field_name, label_text, width in text_fields:
@@ -429,13 +433,19 @@ class ProductFeaturesApp:
             self.tf_form[field_name] = entry
             row += 1
         
-        # Combobox field for platform
-        ttk.Label(detail_frame, text='Platform:').grid(row=row, column=0, sticky=tk.W, pady=3)
-        platform_combo = ttk.Combobox(detail_frame, width=27)
-        platform_combo['values'] = [''] + self.get_config_codes('Platform')
-        platform_combo.grid(row=row, column=1, sticky=tk.EW, pady=3)
-        self.tf_form['platform'] = platform_combo
-        row += 1
+        # Combobox fields for configurations
+        combo_fields = [
+            ('swimlane', 'Swimlane:', 'Swimlane'),
+            ('platform', 'Platform:', 'Platform')
+        ]
+        
+        for field_name, label_text, config_type in combo_fields:
+            ttk.Label(detail_frame, text=label_text).grid(row=row, column=0, sticky=tk.W, pady=3)
+            combo = ttk.Combobox(detail_frame, width=27)
+            combo['values'] = [''] + self.get_config_codes(config_type)
+            combo.grid(row=row, column=1, sticky=tk.EW, pady=3)
+            self.tf_form[field_name] = combo
+            row += 1
         
         ttk.Label(detail_frame, text="Details:").grid(row=row, column=0, sticky=tk.NW, pady=3)
         self.tf_form['details'] = scrolledtext.ScrolledText(detail_frame, height=4, width=50)
@@ -961,6 +971,7 @@ class ProductFeaturesApp:
     def refresh_all_config_dropdowns(self):
         """Refresh all configuration-based dropdowns across all tabs."""
         # Product Features tab
+        swimlanes = [''] + self.get_config_codes('Swimlane')
         platforms = [''] + self.get_config_codes('Platform')
         odds = [''] + self.get_config_codes('ODD')
         environments = [''] + self.get_config_codes('Environment')
@@ -970,15 +981,18 @@ class ProductFeaturesApp:
         self.pf_platform_filter['values'] = platforms
         
         # Product Features form
+        self.pf_form['swimlane']['values'] = swimlanes
         self.pf_form['platform']['values'] = platforms
         self.pf_form['odd']['values'] = odds
         self.pf_form['environment']['values'] = environments
         self.pf_form['trailer']['values'] = trailers
         
         # Capabilities form
+        self.cap_form['swimlane']['values'] = swimlanes
         self.cap_form['platform']['values'] = platforms
         
         # Technical Functions form
+        self.tf_form['swimlane']['values'] = swimlanes
         self.tf_form['platform']['values'] = platforms
         
         # Readiness Matrix filters
