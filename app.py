@@ -2751,8 +2751,13 @@ class ProductFeaturesApp:
                                                   foreground='blue')
         self.interactive_roadmap_info.pack(side=tk.LEFT)
         
+        # Canvas for displaying the chart
+        self.interactive_roadmap_canvas_frame = ttk.Frame(tab)
+        self.interactive_roadmap_canvas_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
         # Store the HTML for the current plot
         self.current_interactive_html = None
+        self.current_interactive_fig = None
         
         # Load filter options
         self.load_interactive_roadmap_filters()
@@ -3066,17 +3071,82 @@ class ProductFeaturesApp:
                 name=trl
             ))
         
-        # Store HTML
+        # Store HTML and figure
         self.current_interactive_html = fig.to_html(include_plotlyjs='cdn')
+        self.current_interactive_fig = fig
         
-        # Open in browser automatically
-        self.open_interactive_roadmap_in_browser()
+        # Display in UI using matplotlib
+        self.display_interactive_roadmap_in_ui(fig)
         
         # Update info
         self.interactive_roadmap_info.config(
-            text=f"Showing {len(items)} items. Chart opened in browser. Use Export buttons to save.",
+            text=f"Showing {len(items)} items. Use 'Open in Browser' for full interactivity or Export buttons to save.",
             foreground='green'
         )
+    
+    def display_interactive_roadmap_in_ui(self, plotly_fig):
+        """Display the Plotly figure in the UI using kaleido to convert to image."""
+        # Clear previous display
+        for widget in self.interactive_roadmap_canvas_frame.winfo_children():
+            widget.destroy()
+        
+        try:
+            # Convert Plotly figure to static image bytes
+            img_bytes = plotly_fig.to_image(format="png", width=1400, height=max(600, len(plotly_fig.data) * 20))
+            
+            # Create PIL Image from bytes
+            from PIL import Image
+            import io
+            img = Image.open(io.BytesIO(img_bytes))
+            
+            # Convert PIL Image to PhotoImage
+            from PIL import ImageTk
+            photo = ImageTk.PhotoImage(img)
+            
+            # Create canvas with scrollbar
+            canvas_container = ttk.Frame(self.interactive_roadmap_canvas_frame)
+            canvas_container.pack(fill=tk.BOTH, expand=True)
+            
+            # Add scrollbars
+            h_scrollbar = ttk.Scrollbar(canvas_container, orient=tk.HORIZONTAL)
+            h_scrollbar.pack(side=tk.BOTTOM, fill=tk.X)
+            
+            v_scrollbar = ttk.Scrollbar(canvas_container, orient=tk.VERTICAL)
+            v_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+            
+            # Create canvas
+            canvas = tk.Canvas(canvas_container, 
+                             xscrollcommand=h_scrollbar.set,
+                             yscrollcommand=v_scrollbar.set,
+                             bg='white')
+            canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+            
+            # Configure scrollbars
+            h_scrollbar.config(command=canvas.xview)
+            v_scrollbar.config(command=canvas.yview)
+            
+            # Add image to canvas
+            canvas.create_image(0, 0, anchor=tk.NW, image=photo)
+            canvas.image = photo  # Keep a reference
+            
+            # Configure scroll region
+            canvas.config(scrollregion=canvas.bbox(tk.ALL))
+            
+            # Bind mouse wheel for scrolling
+            def on_mousewheel(event):
+                canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+            
+            canvas.bind_all("<MouseWheel>", on_mousewheel)
+            
+        except Exception as e:
+            # If conversion fails, show error message
+            error_label = ttk.Label(
+                self.interactive_roadmap_canvas_frame,
+                text=f"Could not display chart in UI: {str(e)}\n\nClick 'Open in Browser' to view the interactive chart.",
+                foreground='red',
+                wraplength=800
+            )
+            error_label.pack(pady=20)
     
     def update_swimlane_checkboxes(self, swimlanes):
         """Update the swimlane filter checkboxes."""
