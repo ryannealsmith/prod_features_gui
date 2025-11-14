@@ -80,13 +80,14 @@ class ProductFeaturesApp:
         scroll.pack(side=tk.RIGHT, fill=tk.Y)
         
         self.pf_tree = ttk.Treeview(list_frame, 
-                                     columns=('Label', 'Name', 'Platform', 'Start Date', 'TRL3', 'TRL6', 'TRL9'),
+                                     columns=('Label', 'Name', 'Swimlane', 'Platform', 'Start Date', 'TRL3', 'TRL6', 'TRL9'),
                                      show='tree headings',
                                      yscrollcommand=scroll.set)
         scroll.config(command=self.pf_tree.yview)
         
         self.pf_tree.heading('Label', text='Label')
         self.pf_tree.heading('Name', text='Name')
+        self.pf_tree.heading('Swimlane', text='Swimlane')
         self.pf_tree.heading('Platform', text='Platform')
         self.pf_tree.heading('Start Date', text='Start Date')
         self.pf_tree.heading('TRL3', text='TRL3')
@@ -96,6 +97,7 @@ class ProductFeaturesApp:
         self.pf_tree.column('#0', width=0, stretch=False)
         self.pf_tree.column('Label', width=100)
         self.pf_tree.column('Name', width=200)
+        self.pf_tree.column('Swimlane', width=80)
         self.pf_tree.column('Platform', width=90)
         self.pf_tree.column('Start Date', width=90)
         self.pf_tree.column('TRL3', width=90)
@@ -129,6 +131,7 @@ class ProductFeaturesApp:
         text_fields = [
             ('label', 'Label*:', 30),
             ('name', 'Name*:', 50),
+            ('swimlane', 'Swimlane:', 20),
             ('when_date', 'When:', 30),
             ('start_date', 'Start Date:', 15),
             ('trl3_date', 'TRL3 Date:', 15),
@@ -1028,6 +1031,7 @@ class ProductFeaturesApp:
             self.pf_tree.insert('', tk.END, iid=feature['id'],
                                values=(feature['label'], 
                                       feature['name'],
+                                      feature.get('swimlane', ''),
                                       feature['platform'],
                                       feature['start_date'],
                                       feature['trl3_date'] or '',

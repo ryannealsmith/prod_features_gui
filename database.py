@@ -31,6 +31,7 @@ class Database:
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 label TEXT UNIQUE NOT NULL,
                 name TEXT NOT NULL,
+                swimlane TEXT,
                 platform TEXT,
                 odd TEXT,
                 environment TEXT,
@@ -162,14 +163,14 @@ class Database:
         cursor = self.connection.cursor()
         cursor.execute('''
             INSERT INTO product_features 
-            (label, name, platform, odd, environment, trailer, details, comments, 
+            (label, name, swimlane, platform, odd, environment, trailer, details, comments, 
              when_date, start_date, trl3_date, trl6_date, trl9_date)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
-            data.get('label'), data.get('name'), data.get('platform'),
-            data.get('odd'), data.get('environment'), data.get('trailer'),
-            data.get('details'), data.get('comments'), data.get('when_date'),
-            data.get('start_date'), data.get('trl3_date'), 
+            data.get('label'), data.get('name'), data.get('swimlane'),
+            data.get('platform'), data.get('odd'), data.get('environment'), 
+            data.get('trailer'), data.get('details'), data.get('comments'), 
+            data.get('when_date'), data.get('start_date'), data.get('trl3_date'), 
             data.get('trl6_date'), data.get('trl9_date')
         ))
         self.connection.commit()
@@ -252,15 +253,15 @@ class Database:
         cursor = self.connection.cursor()
         cursor.execute('''
             UPDATE product_features 
-            SET label=?, name=?, platform=?, odd=?, environment=?, trailer=?,
+            SET label=?, name=?, swimlane=?, platform=?, odd=?, environment=?, trailer=?,
                 details=?, comments=?, when_date=?, start_date=?, trl3_date=?,
                 trl6_date=?, trl9_date=?, updated_at=CURRENT_TIMESTAMP
             WHERE id = ?
         ''', (
-            data.get('label'), data.get('name'), data.get('platform'),
-            data.get('odd'), data.get('environment'), data.get('trailer'),
-            data.get('details'), data.get('comments'), data.get('when_date'),
-            data.get('start_date'), data.get('trl3_date'), 
+            data.get('label'), data.get('name'), data.get('swimlane'),
+            data.get('platform'), data.get('odd'), data.get('environment'), 
+            data.get('trailer'), data.get('details'), data.get('comments'), 
+            data.get('when_date'), data.get('start_date'), data.get('trl3_date'), 
             data.get('trl6_date'), data.get('trl9_date'), pf_id
         ))
         self.connection.commit()
