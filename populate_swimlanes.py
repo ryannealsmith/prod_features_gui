@@ -16,6 +16,8 @@ swimlane_mapping = {
     'CE': 'CE Marking',
     'XMS': 'Fleet Management',
     'OPS': 'Operations',
+    'REV': 'Reversing',
+    'HRI': 'Human-Robot Interaction',
 }
 
 db = database.Database()
