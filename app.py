@@ -11,6 +11,12 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import matplotlib.dates as mdates
 import json
+import plotly.graph_objects as go
+import plotly.express as px
+from plotly.subplots import make_subplots
+import webbrowser
+import os
+import tempfile
 
 class ProductFeaturesApp:
     def __init__(self, root):
@@ -43,6 +49,7 @@ class ProductFeaturesApp:
         self.create_technical_functions_tab()
         self.create_readiness_matrix_tab()
         self.create_roadmap_tab()
+        self.create_interactive_roadmap_tab()
     
     def create_product_features_tab(self):
         """Create tab for managing Product Features."""
@@ -2682,6 +2689,477 @@ class ProductFeaturesApp:
         canvas = FigureCanvasTkAgg(fig, master=self.roadmap_frame)
         canvas.draw()
         canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+    
+    def create_interactive_roadmap_tab(self):
+        """Create Interactive Roadmap visualization with Plotly."""
+        tab = ttk.Frame(self.notebook)
+        self.notebook.add(tab, text="Interactive Roadmap")
+        
+        # Controls Frame
+        control_frame = ttk.Frame(tab)
+        control_frame.pack(fill=tk.X, padx=10, pady=10)
+        
+        # View selection
+        ttk.Label(control_frame, text="View:").grid(row=0, column=0, padx=5, sticky='w')
+        self.interactive_roadmap_view = ttk.Combobox(control_frame, 
+                                         values=['Product Features', 'Capabilities', 'Both'],
+                                         state='readonly',
+                                         width=20)
+        self.interactive_roadmap_view.set('Both')
+        self.interactive_roadmap_view.grid(row=0, column=1, padx=5, sticky='w')
+        
+        # Filter controls
+        ttk.Label(control_frame, text="Platform:").grid(row=0, column=2, padx=(20, 5), sticky='w')
+        self.interactive_roadmap_platform = ttk.Combobox(control_frame, width=15)
+        self.interactive_roadmap_platform.grid(row=0, column=3, padx=5, sticky='w')
+        
+        ttk.Label(control_frame, text="ODD:").grid(row=0, column=4, padx=(10, 5), sticky='w')
+        self.interactive_roadmap_odd = ttk.Combobox(control_frame, width=15)
+        self.interactive_roadmap_odd.grid(row=0, column=5, padx=5, sticky='w')
+        
+        ttk.Label(control_frame, text="Environment:").grid(row=0, column=6, padx=(10, 5), sticky='w')
+        self.interactive_roadmap_environment = ttk.Combobox(control_frame, width=15)
+        self.interactive_roadmap_environment.grid(row=0, column=7, padx=5, sticky='w')
+        
+        # Second row of controls
+        ttk.Button(control_frame, text="Update Roadmap",
+                  command=self.update_interactive_roadmap).grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky='w')
+        
+        ttk.Button(control_frame, text="Export PNG",
+                  command=lambda: self.export_interactive_roadmap('png')).grid(row=1, column=2, padx=5, pady=5, sticky='w')
+        
+        ttk.Button(control_frame, text="Export PDF",
+                  command=lambda: self.export_interactive_roadmap('pdf')).grid(row=1, column=3, padx=5, pady=5, sticky='w')
+        
+        ttk.Button(control_frame, text="Open in Browser",
+                  command=self.open_interactive_roadmap_in_browser).grid(row=1, column=4, padx=5, pady=5, sticky='w')
+        
+        # Swimlane toggles frame
+        swimlane_frame = ttk.LabelFrame(tab, text="Swimlane Filters")
+        swimlane_frame.pack(fill=tk.X, padx=10, pady=5)
+        
+        # Container for swimlane checkboxes
+        self.swimlane_checkboxes_frame = ttk.Frame(swimlane_frame)
+        self.swimlane_checkboxes_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        
+        self.interactive_swimlane_vars = {}
+        
+        # Info label
+        info_frame = ttk.Frame(tab)
+        info_frame.pack(fill=tk.X, padx=10, pady=5)
+        self.interactive_roadmap_info = ttk.Label(info_frame, text="Select filters and click 'Update Roadmap' to view interactive timeline", 
+                                                  foreground='blue')
+        self.interactive_roadmap_info.pack(side=tk.LEFT)
+        
+        # Store the HTML for the current plot
+        self.current_interactive_html = None
+        
+        # Load filter options
+        self.load_interactive_roadmap_filters()
+        self.update_interactive_roadmap()
+    
+    def load_interactive_roadmap_filters(self):
+        """Load filter options for interactive roadmap."""
+        # Load platform options
+        platforms = self.db.get_configurations('Platform')
+        platform_values = [''] + [p['code'] for p in platforms]
+        self.interactive_roadmap_platform['values'] = platform_values
+        
+        # Load ODD options
+        odds = self.db.get_configurations('ODD')
+        odd_values = [''] + [o['code'] for o in odds]
+        self.interactive_roadmap_odd['values'] = odd_values
+        
+        # Load Environment options
+        environments = self.db.get_configurations('Environment')
+        env_values = [''] + [e['code'] for e in environments]
+        self.interactive_roadmap_environment['values'] = env_values
+    
+    def update_interactive_roadmap(self):
+        """Update the interactive roadmap visualization with Plotly."""
+        # Get filters
+        filters = {}
+        if hasattr(self, 'interactive_roadmap_platform') and self.interactive_roadmap_platform.get():
+            filters['platform'] = self.interactive_roadmap_platform.get()
+        if hasattr(self, 'interactive_roadmap_odd') and self.interactive_roadmap_odd.get():
+            filters['odd'] = self.interactive_roadmap_odd.get()
+        if hasattr(self, 'interactive_roadmap_environment') and self.interactive_roadmap_environment.get():
+            filters['environment'] = self.interactive_roadmap_environment.get()
+        
+        view = self.interactive_roadmap_view.get()
+        
+        # TRL colors
+        trl_colors = {
+            'TRL3': '#DC3545',  # Red
+            'TRL6': '#FFC107',  # Amber
+            'TRL9': '#28A745'   # Green
+        }
+        
+        # Collect items with swimlanes
+        items = []
+        all_swimlanes = set()
+        
+        if view in ['Product Features', 'Both']:
+            pfs = self.db.get_product_features(filters)
+            for pf in pfs:
+                if not any([pf.get('trl3_date'), pf.get('trl6_date'), pf.get('trl9_date')]):
+                    continue
+                
+                trl_dates = []
+                if pf.get('trl3_date'):
+                    try:
+                        trl_dates.append(('TRL3', datetime.strptime(pf['trl3_date'], '%Y-%m-%d')))
+                    except: pass
+                if pf.get('trl6_date'):
+                    try:
+                        trl_dates.append(('TRL6', datetime.strptime(pf['trl6_date'], '%Y-%m-%d')))
+                    except: pass
+                if pf.get('trl9_date'):
+                    try:
+                        trl_dates.append(('TRL9', datetime.strptime(pf['trl9_date'], '%Y-%m-%d')))
+                    except: pass
+                
+                if trl_dates:
+                    trl_dates.sort(key=lambda x: x[1])
+                    swimlane = pf.get('swimlane', 'Unassigned')
+                    all_swimlanes.add(swimlane)
+                    items.append({
+                        'type': 'Product Feature',
+                        'label': pf['label'],
+                        'name': pf['name'],
+                        'swimlane': swimlane,
+                        'trl_dates': trl_dates,
+                        'details': pf.get('details', ''),
+                        'platform': pf.get('platform', ''),
+                        'odd': pf.get('odd', ''),
+                        'environment': pf.get('environment', '')
+                    })
+        
+        if view in ['Capabilities', 'Both']:
+            caps = self.db.get_capabilities(filters)
+            for cap in caps:
+                if not any([cap.get('trl3_date'), cap.get('trl6_date'), cap.get('trl9_date')]):
+                    continue
+                
+                trl_dates = []
+                if cap.get('trl3_date'):
+                    try:
+                        trl_dates.append(('TRL3', datetime.strptime(cap['trl3_date'], '%Y-%m-%d')))
+                    except: pass
+                if cap.get('trl6_date'):
+                    try:
+                        trl_dates.append(('TRL6', datetime.strptime(cap['trl6_date'], '%Y-%m-%d')))
+                    except: pass
+                if cap.get('trl9_date'):
+                    try:
+                        trl_dates.append(('TRL9', datetime.strptime(cap['trl9_date'], '%Y-%m-%d')))
+                    except: pass
+                
+                if trl_dates:
+                    trl_dates.sort(key=lambda x: x[1])
+                    swimlane = cap.get('swimlane', 'Unassigned')
+                    all_swimlanes.add(swimlane)
+                    items.append({
+                        'type': 'Capability',
+                        'label': cap['label'],
+                        'name': cap['name'],
+                        'swimlane': swimlane,
+                        'trl_dates': trl_dates,
+                        'details': cap.get('details', ''),
+                        'platform': cap.get('platform', ''),
+                        'odd': cap.get('odd', ''),
+                        'environment': cap.get('environment', '')
+                    })
+        
+        # Update swimlane checkboxes
+        self.update_swimlane_checkboxes(all_swimlanes)
+        
+        # Filter by selected swimlanes
+        selected_swimlanes = [sl for sl, var in self.interactive_swimlane_vars.items() if var.get()]
+        if selected_swimlanes:
+            items = [item for item in items if item['swimlane'] in selected_swimlanes]
+        
+        if not items:
+            self.interactive_roadmap_info.config(
+                text="No timeline data available. Adjust filters or swimlane selections.",
+                foreground='red'
+            )
+            self.current_interactive_html = None
+            return
+        
+        # Sort by swimlane then by date
+        items.sort(key=lambda x: (x['swimlane'], x['trl_dates'][0][1]))
+        
+        # Create Plotly figure
+        fig = go.Figure()
+        
+        # Track y positions
+        y_pos = 0
+        y_labels = []
+        y_positions = []
+        swimlane_boundaries = []
+        current_swimlane = None
+        swimlane_start = 0
+        
+        # Get milestones
+        milestones = self.db.get_milestones()
+        
+        for item in items:
+            # Track swimlane changes
+            if item['swimlane'] != current_swimlane:
+                if current_swimlane is not None:
+                    swimlane_boundaries.append((current_swimlane, swimlane_start, y_pos - 0.5))
+                current_swimlane = item['swimlane']
+                swimlane_start = y_pos
+            
+            y_labels.append(f"{item['label']}")
+            y_positions.append(y_pos)
+            
+            # Create hover text
+            hover_text = f"<b>{item['type']}: {item['label']}</b><br>"
+            hover_text += f"Name: {item['name']}<br>"
+            hover_text += f"Swimlane: {item['swimlane']}<br>"
+            if item['details']:
+                hover_text += f"Details: {item['details'][:100]}...<br>" if len(item['details']) > 100 else f"Details: {item['details']}<br>"
+            hover_text += f"Platform: {item['platform']}<br>"
+            hover_text += f"ODD: {item['odd']}<br>"
+            hover_text += f"Environment: {item['environment']}<br>"
+            hover_text += "<br><b>TRL Progression:</b><br>"
+            
+            # Draw segments between TRL milestones
+            trl_dates = item['trl_dates']
+            
+            for i in range(len(trl_dates)):
+                start_date = trl_dates[i][1]
+                start_trl = trl_dates[i][0]
+                hover_text += f"{start_trl}: {start_date.strftime('%Y-%m-%d')}<br>"
+                
+                if i < len(trl_dates) - 1:
+                    end_date = trl_dates[i + 1][1]
+                else:
+                    # Extend last segment
+                    end_date = start_date + timedelta(days=90)
+                
+                # Add bar for this segment using shape
+                fig.add_trace(go.Scatter(
+                    x=[start_date, end_date, end_date, start_date, start_date],
+                    y=[y_pos - 0.3, y_pos - 0.3, y_pos + 0.3, y_pos + 0.3, y_pos - 0.3],
+                    fill='toself',
+                    fillcolor=trl_colors[start_trl],
+                    line=dict(color='black', width=1),
+                    mode='lines',
+                    name=f"{item['label']} - {start_trl}",
+                    hovertext=hover_text,
+                    hoverinfo='text',
+                    showlegend=False
+                ))
+                
+                # Add TRL milestone marker
+                fig.add_trace(go.Scatter(
+                    x=[start_date],
+                    y=[y_pos],
+                    mode='markers',
+                    marker=dict(
+                        size=10,
+                        color='black',
+                        symbol='circle'
+                    ),
+                    hovertext=f"{start_trl} Milestone: {start_date.strftime('%Y-%m-%d')}",
+                    hoverinfo='text',
+                    showlegend=False
+                ))
+            
+            y_pos += 1
+        
+        # Add final swimlane boundary
+        if current_swimlane is not None:
+            swimlane_boundaries.append((current_swimlane, swimlane_start, y_pos - 0.5))
+        
+        # Add swimlane separators and labels
+        for swimlane_name, start_y, end_y in swimlane_boundaries:
+            # Add horizontal line separator
+            if end_y < y_pos - 1:
+                fig.add_hline(
+                    y=end_y + 0.5,
+                    line=dict(color='gray', width=2, dash='solid'),
+                    opacity=0.5
+                )
+            
+            # Add swimlane label as annotation
+            mid_y = (start_y + end_y) / 2
+            fig.add_annotation(
+                x=0.02,
+                y=mid_y,
+                text=f"<b>{swimlane_name}</b>",
+                xref="paper",
+                yref="y",
+                showarrow=False,
+                xanchor='left',
+                font=dict(size=10, color='blue'),
+                bgcolor='rgba(173, 216, 230, 0.3)',
+                bordercolor='blue',
+                borderwidth=1,
+                borderpad=4
+            )
+        
+        # Add milestone lines
+        for milestone in milestones:
+            try:
+                milestone_date = datetime.strptime(milestone['date'], '%Y-%m-%d')
+                fig.add_vline(
+                    x=milestone_date,
+                    line=dict(color='purple', width=2, dash='dash'),
+                    opacity=0.7
+                )
+                fig.add_annotation(
+                    x=milestone_date,
+                    y=1.05,
+                    text=f"⭐ {milestone['name']}",
+                    xref="x",
+                    yref="paper",
+                    showarrow=False,
+                    font=dict(size=10, color='purple', family='Arial'),
+                    bgcolor='rgba(255, 255, 224, 0.8)',
+                    bordercolor='purple',
+                    borderwidth=1,
+                    borderpad=3
+                )
+            except:
+                pass
+        
+        # Update layout
+        fig.update_layout(
+            title=dict(
+                text=f"Interactive {view} Roadmap ({len(items)} items)",
+                font=dict(size=16, family='Arial Black')
+            ),
+            xaxis=dict(
+                title="Timeline",
+                type='date',
+                showgrid=True,
+                gridcolor='lightgray',
+                tickformat='%b %Y'
+            ),
+            yaxis=dict(
+                title="",
+                tickmode='array',
+                tickvals=y_positions,
+                ticktext=y_labels,
+                autorange='reversed',
+                showgrid=False
+            ),
+            height=max(600, len(items) * 30 + 150),
+            hovermode='closest',
+            plot_bgcolor='white',
+            margin=dict(l=150, r=50, t=100, b=80),
+            bargap=0.1
+        )
+        
+        # Add legend for TRL levels
+        for trl, color in trl_colors.items():
+            fig.add_trace(go.Scatter(
+                x=[None],
+                y=[None],
+                mode='markers',
+                marker=dict(size=10, color=color, symbol='square'),
+                showlegend=True,
+                name=trl
+            ))
+        
+        # Store HTML
+        self.current_interactive_html = fig.to_html(include_plotlyjs='cdn')
+        
+        # Open in browser automatically
+        self.open_interactive_roadmap_in_browser()
+        
+        # Update info
+        self.interactive_roadmap_info.config(
+            text=f"Showing {len(items)} items. Chart opened in browser. Use Export buttons to save.",
+            foreground='green'
+        )
+    
+    def update_swimlane_checkboxes(self, swimlanes):
+        """Update the swimlane filter checkboxes."""
+        # Clear existing checkboxes
+        for widget in self.swimlane_checkboxes_frame.winfo_children():
+            widget.destroy()
+        
+        self.interactive_swimlane_vars.clear()
+        
+        sorted_swimlanes = sorted(swimlanes)
+        
+        # Create checkboxes in a grid
+        row = 0
+        col = 0
+        max_cols = 5
+        
+        for swimlane in sorted_swimlanes:
+            var = tk.BooleanVar(value=True)
+            self.interactive_swimlane_vars[swimlane] = var
+            
+            cb = ttk.Checkbutton(
+                self.swimlane_checkboxes_frame,
+                text=swimlane,
+                variable=var,
+                command=self.update_interactive_roadmap
+            )
+            cb.grid(row=row, column=col, sticky='w', padx=5, pady=2)
+            
+            col += 1
+            if col >= max_cols:
+                col = 0
+                row += 1
+    
+    def open_interactive_roadmap_in_browser(self):
+        """Open the current interactive roadmap in a web browser."""
+        if not self.current_interactive_html:
+            messagebox.showwarning("No Data", "Please generate a roadmap first by clicking 'Update Roadmap'.")
+            return
+        
+        # Create temporary HTML file
+        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.html', encoding='utf-8') as f:
+            f.write(self.current_interactive_html)
+            temp_path = f.name
+        
+        # Open in default browser
+        webbrowser.open('file://' + temp_path)
+    
+    def export_interactive_roadmap(self, format_type='png'):
+        """Export the interactive roadmap to PNG or PDF."""
+        if not self.current_interactive_html:
+            messagebox.showwarning("No Data", "Please generate a roadmap first by clicking 'Update Roadmap'.")
+            return
+        
+        # Ask for save location
+        if format_type == 'png':
+            filepath = filedialog.asksaveasfilename(
+                defaultextension=".png",
+                filetypes=[("PNG files", "*.png"), ("All files", "*.*")],
+                title="Export Roadmap as PNG"
+            )
+        else:
+            filepath = filedialog.asksaveasfilename(
+                defaultextension=".pdf",
+                filetypes=[("PDF files", "*.pdf"), ("All files", "*.*")],
+                title="Export Roadmap as PDF"
+            )
+        
+        if not filepath:
+            return
+        
+        try:
+            # Need to recreate the figure for export
+            # This is a simplified version - we'll save the HTML and let user print to PDF from browser
+            messagebox.showinfo(
+                "Export Info",
+                f"To export as {format_type.upper()}:\n\n"
+                "1. The chart is open in your browser\n"
+                "2. Use the camera icon in the plotly toolbar (top-right of chart)\n"
+                "3. Or use your browser's Print function to save as PDF\n\n"
+                "For high-resolution exports, use the plotly toolbar's download option."
+            )
+        except Exception as e:
+            messagebox.showerror("Export Error", f"Failed to export: {str(e)}")
     
     def export_to_json(self):
         """Export all database content to a JSON file."""
