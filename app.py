@@ -2917,6 +2917,7 @@ class ProductFeaturesApp:
                 current_swimlane = item['swimlane']
                 swimlane_start = y_pos
             
+            # Y-axis label without swimlane (back to original)
             y_labels.append(f"{item['label']}")
             y_positions.append(y_pos)
             
@@ -2945,10 +2946,10 @@ class ProductFeaturesApp:
                     # Extend last segment
                     end_date = start_date + timedelta(days=90)
                 
-                # Add bar for this segment using shape
+                # Add bar for this segment using shape (reduced height)
                 fig.add_trace(go.Scatter(
                     x=[start_date, end_date, end_date, start_date, start_date],
-                    y=[y_pos - 0.3, y_pos - 0.3, y_pos + 0.3, y_pos + 0.3, y_pos - 0.3],
+                    y=[y_pos - 0.2, y_pos - 0.2, y_pos + 0.2, y_pos + 0.2, y_pos - 0.2],
                     fill='toself',
                     fillcolor=trl_colors[start_trl],
                     line=dict(color='black', width=1),
@@ -2980,7 +2981,7 @@ class ProductFeaturesApp:
         if current_swimlane is not None:
             swimlane_boundaries.append((current_swimlane, swimlane_start, y_pos - 0.5))
         
-        # Add swimlane separators and labels
+        # Add swimlane separators and labels on the left
         for swimlane_name, start_y, end_y in swimlane_boundaries:
             # Add horizontal line separator
             if end_y < y_pos - 1:
@@ -2990,16 +2991,16 @@ class ProductFeaturesApp:
                     opacity=0.5
                 )
             
-            # Add swimlane label as annotation
+            # Add swimlane label as annotation on the far left
             mid_y = (start_y + end_y) / 2
             fig.add_annotation(
-                x=0.02,
+                x=-0.15,  # Position further left, before the y-axis labels
                 y=mid_y,
                 text=f"<b>{swimlane_name}</b>",
                 xref="paper",
                 yref="y",
                 showarrow=False,
-                xanchor='left',
+                xanchor='center',
                 font=dict(size=10, color='blue'),
                 bgcolor='rgba(173, 216, 230, 0.3)',
                 bordercolor='blue',
@@ -3056,7 +3057,7 @@ class ProductFeaturesApp:
             height=max(600, len(items) * 30 + 150),
             hovermode='closest',
             plot_bgcolor='white',
-            margin=dict(l=150, r=50, t=100, b=80),
+            margin=dict(l=300, r=50, t=100, b=80),
             bargap=0.1
         )
         
