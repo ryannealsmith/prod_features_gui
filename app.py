@@ -2895,6 +2895,18 @@ class ProductFeaturesApp:
         # Sort by swimlane then by date
         items.sort(key=lambda x: (x['swimlane'], x['trl_dates'][0][1]))
         
+        # Calculate date range for background shading
+        all_dates = []
+        for item in items:
+            for _, date in item['trl_dates']:
+                all_dates.append(date)
+        min_date = min(all_dates) if all_dates else datetime.now()
+        max_date = max(all_dates) if all_dates else datetime.now()
+        # Add padding to date range
+        date_padding = timedelta(days=30)
+        min_date -= date_padding
+        max_date += date_padding
+        
         # Create Plotly figure
         fig = go.Figure()
         
@@ -2913,7 +2925,7 @@ class ProductFeaturesApp:
             # Track swimlane changes
             if item['swimlane'] != current_swimlane:
                 if current_swimlane is not None:
-                    swimlane_boundaries.append((current_swimlane, swimlane_start, y_pos - 0.5))
+                    swimlane_boundaries.append((current_swimlane, swimlane_start, y_pos - 0.6))
                 current_swimlane = item['swimlane']
                 swimlane_start = y_pos
             
@@ -2949,7 +2961,7 @@ class ProductFeaturesApp:
                 # Add bar for this segment using shape (reduced height)
                 fig.add_trace(go.Scatter(
                     x=[start_date, end_date, end_date, start_date, start_date],
-                    y=[y_pos - 0.2, y_pos - 0.2, y_pos + 0.2, y_pos + 0.2, y_pos - 0.2],
+                    y=[y_pos - 0.25, y_pos - 0.25, y_pos + 0.25, y_pos + 0.25, y_pos - 0.25],
                     fill='toself',
                     fillcolor=trl_colors[start_trl],
                     line=dict(color='black', width=1),
@@ -2959,6 +2971,24 @@ class ProductFeaturesApp:
                     hoverinfo='text',
                     showlegend=False
                 ))
+                
+                # Add text label inside the first bar segment
+                if i == 0:
+                    mid_date = start_date + (end_date - start_date) / 2
+                    # Truncate name if too long
+                    display_name = item['name']
+                    if len(display_name) > 40:
+                        display_name = display_name[:37] + '...'
+                    
+                    fig.add_annotation(
+                        x=mid_date,
+                        y=y_pos,
+                        text=display_name,
+                        showarrow=False,
+                        font=dict(size=9, color='black'),
+                        xanchor='center',
+                        yanchor='middle'
+                    )
                 
                 # Add TRL milestone marker
                 fig.add_trace(go.Scatter(
@@ -2975,18 +3005,33 @@ class ProductFeaturesApp:
                     showlegend=False
                 ))
             
-            y_pos += 1
+            y_pos += 1.2
         
         # Add final swimlane boundary
         if current_swimlane is not None:
-            swimlane_boundaries.append((current_swimlane, swimlane_start, y_pos - 0.5))
+            swimlane_boundaries.append((current_swimlane, swimlane_start, y_pos - 0.6))
         
-        # Add swimlane separators and labels on the left
-        for swimlane_name, start_y, end_y in swimlane_boundaries:
-            # Add horizontal line separator
-            if end_y < y_pos - 1:
+        # Add swimlane separators, background shading, and labels on the left
+        for idx, (swimlane_name, start_y, end_y) in enumerate(swimlane_boundaries):
+            # Add alternating gray background shading
+            if idx % 2 == 1:  # Shade every other swimlane
+                fig.add_shape(
+                    type="rect",
+                    x0=0,
+                    x1=1,
+                    y0=start_y - 0.6,
+                    y1=end_y,
+                    xref="paper",
+                    yref="y",
+                    fillcolor="rgba(200, 200, 200, 0.15)",
+                    line=dict(width=0),
+                    layer="below"
+                )
+            
+            # Add horizontal line separator (moved up to avoid running through bars)
+            if end_y < y_pos - 1.2:
                 fig.add_hline(
-                    y=end_y + 0.5,
+                    y=end_y,
                     line=dict(color='gray', width=2, dash='solid'),
                     opacity=0.5
                 )
@@ -3001,11 +3046,11 @@ class ProductFeaturesApp:
                 yref="y",
                 showarrow=False,
                 xanchor='center',
-                font=dict(size=10, color='blue'),
+                font=dict(size=12, color='blue'),
                 bgcolor='rgba(173, 216, 230, 0.3)',
                 bordercolor='blue',
-                borderwidth=1,
-                borderpad=4
+                borderwidth=2,
+                borderpad=8
             )
         
         # Add milestone lines
@@ -3044,7 +3089,8 @@ class ProductFeaturesApp:
                 type='date',
                 showgrid=True,
                 gridcolor='lightgray',
-                tickformat='%b %Y'
+                tickformat='%b %Y',
+                side='bottom'
             ),
             yaxis=dict(
                 title="",
@@ -3059,6 +3105,30 @@ class ProductFeaturesApp:
             plot_bgcolor='white',
             margin=dict(l=300, r=50, t=100, b=80),
             bargap=0.1
+        )
+        
+        # Add top x-axis after initial layout
+        fig.add_trace(go.Scatter(
+            x=[min_date],
+            y=[0],
+            mode='markers',
+            marker=dict(size=0.1, color='rgba(0,0,0,0)'),
+            xaxis='x2',
+            yaxis='y',
+            showlegend=False,
+            hoverinfo='skip'
+        ))
+        
+        fig.update_layout(
+            xaxis2=dict(
+                type='date',
+                showgrid=False,
+                tickformat='%b %Y',
+                side='top',
+                overlaying='x',
+                range=[min_date, max_date],
+                showticklabels=True
+            )
         )
         
         # Add legend for TRL levels
