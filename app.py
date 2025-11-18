@@ -2933,12 +2933,12 @@ class ProductFeaturesApp:
             y_labels.append(f"{item['label']}")
             y_positions.append(y_pos)
             
-            # Create hover text
-            hover_text = f"<b>{item['type']}: {item['label']}</b><br>"
-            hover_text += f"Name: {item['name']}<br>"
-            hover_text += f"Swimlane: {item['swimlane']}<br>"
+            # Create hover text - use description (details) instead of label
+            hover_text = f"<b>{item['type']}: {item['name']}</b><br>"
             if item['details']:
-                hover_text += f"Details: {item['details'][:100]}...<br>" if len(item['details']) > 100 else f"Details: {item['details']}<br>"
+                hover_text += f"{item['details']}<br><br>"
+            hover_text += f"Label: {item['label']}<br>"
+            hover_text += f"Swimlane: {item['swimlane']}<br>"
             hover_text += f"Platform: {item['platform']}<br>"
             hover_text += f"ODD: {item['odd']}<br>"
             hover_text += f"Environment: {item['environment']}<br>"
@@ -2966,29 +2966,11 @@ class ProductFeaturesApp:
                     fillcolor=trl_colors[start_trl],
                     line=dict(color='black', width=1),
                     mode='lines',
-                    name=f"{item['label']} - {start_trl}",
+                    name=f"{item['name']} - {start_trl}",
                     hovertext=hover_text,
                     hoverinfo='text',
                     showlegend=False
                 ))
-                
-                # Add text label inside the first bar segment
-                if i == 0:
-                    mid_date = start_date + (end_date - start_date) / 2
-                    # Truncate name if too long
-                    display_name = item['name']
-                    if len(display_name) > 40:
-                        display_name = display_name[:37] + '...'
-                    
-                    fig.add_annotation(
-                        x=mid_date,
-                        y=y_pos,
-                        text=display_name,
-                        showarrow=False,
-                        font=dict(size=9, color='black'),
-                        xanchor='center',
-                        yanchor='middle'
-                    )
                 
                 # Add TRL milestone marker
                 fig.add_trace(go.Scatter(
