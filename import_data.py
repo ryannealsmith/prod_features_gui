@@ -35,12 +35,13 @@ def clean_text(text):
     return str(text).strip()
 
 def extract_swimlane_from_label(label):
-    """Extract swimlane from capability or technical function label.
+    """Extract swimlane from product feature, capability or technical function label.
     
     Examples:
-        CA-ACT-1.1 -> Actors (ACT)
-        CA-LOC-4.1 -> Localisation (LOC)
-        TF-PRC-1.0 -> Perception (PRC)
+        PF-ACT-1.1 -> Actors
+        CA-ACT-1.1 -> Actors
+        CA-LOC-4.1 -> Localisation
+        TF-PRC-1.0 -> Perception
     """
     if not label:
         return None
@@ -56,23 +57,24 @@ def extract_swimlane_from_label(label):
         'CGO': 'Cargo',
         'VEH': 'Vehicle',
         'SV': 'Supervision',
-        'FWD': 'Forward',
-        'REV': 'Reverse',
+        'FWD': 'Forward Driving',
+        'REV': 'Reverse Driving',
         'NAV': 'Navigation',
         'MSN': 'Mission',
-        'HMI': 'HMI',
+        'HMI': 'Human-Robot Interaction',
         'CE': 'CE',
         'PRK': 'Parking',
         'DCK': 'Docking',
-        'CHE': 'Charge',
-        'HCH': 'HookCharge',
+        'CHE': 'Charging',
+        'HCH': 'Hitching/Unhitching',
         'XMS': 'Crossmarket',
         'OPS': 'Operations',
         'PRC': 'Perception',
-        'BAR': 'Barrier'
+        'BAR': 'Barrier',
+        'HRI': 'Human-Robot Interaction'
     }
     
-    # Try to extract the code (e.g., 'ACT' from 'CA-ACT-1.1' or 'PRC' from 'TF-PRC-1.0')
+    # Try to extract the code (e.g., 'ACT' from 'PF-ACT-1.1', 'CA-ACT-1.1' or 'PRC' from 'TF-PRC-1.0')
     parts = label.split('-')
     if len(parts) >= 2:
         code = parts[1]
@@ -96,6 +98,16 @@ def import_data():
         label = clean_text(row.get('Label'))
         if not label or label == 'nan':
             continue
+        
+        # Skip duplicates
+        if label in pf_label_to_id:
+            print(f"  Skipping duplicate: {label}")
+            continue
+        
+        # Get swimlane from Excel, or extract from label if missing
+        swimlane = clean_text(row.get('Swimlanes'))
+        if not swimlane:
+            swimlane = extract_swimlane_from_label(label)
             
         pf_data = {
             'label': label,
@@ -110,7 +122,8 @@ def import_data():
             'start_date': parse_date(row.get('Start Date')),
             'trl3_date': parse_date(row.get('TRL 3')),
             'trl6_date': parse_date(row.get('TRL 6')),
-            'trl9_date': parse_date(row.get('TRL 9'))
+            'trl9_date': parse_date(row.get('TRL 9')),
+            'swimlane': swimlane
         }
         
         try:
@@ -129,6 +142,11 @@ def import_data():
     for idx, row in cap_df.iterrows():
         label = clean_text(row.get('Label'))
         if not label or label == 'nan':
+            continue
+        
+        # Skip duplicates
+        if label in cap_label_to_id:
+            print(f"  Skipping duplicate: {label}")
             continue
         
         # Get swimlane from Excel, or extract from label if missing
@@ -173,6 +191,11 @@ def import_data():
     for idx, row in tf_df.iterrows():
         label = clean_text(row.get('Label'))
         if not label or label == 'nan':
+            continue
+        
+        # Skip duplicates
+        if label in tf_label_to_id:
+            print(f"  Skipping duplicate: {label}")
             continue
         
         # Get swimlane from Excel, or extract from label if missing
