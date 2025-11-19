@@ -19,6 +19,7 @@ A comprehensive GUI application for managing Product Features, Capabilities, Tec
 - Set target dates for product variants
 - Link product features to product variants
 - Integrated with Readiness Matrix and Roadmap filtering
+- **Export to Markdown**: Generate comprehensive documentation with dependencies, TRL dates, cross-references, and roadmap snapshot ⭐ NEW
 
 ### 3. **Product Features Management**
 - View, add, edit, and delete product features
@@ -120,6 +121,7 @@ python app.py
 
 ## Recent Updates (November 2025)
 
+- ✅ Product Variant Markdown export with dependencies and roadmap snapshot
 - ✅ Product Variants with auto-fill filtering
 - ✅ Configurations management
 - ✅ Interactive Plotly roadmap
@@ -134,6 +136,7 @@ python app.py
 
 - **README.md** - This file
 - **QUICKSTART.md** - Setup and usage guide
+- **EXPORT_GUIDE.md** - Product Variant export documentation ⭐ NEW
 - **PROJECT_SUMMARY.md** - Detailed project overview
 - **VISUAL_OVERVIEW.md** - Visual documentation
 - **EDIT_GUIDE.md** - Editing guide

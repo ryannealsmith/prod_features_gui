@@ -99,6 +99,19 @@ python app.py
 5. Select configurations
 6. Click "Save"
 
+### Export Product Variant to Markdown ⭐ NEW
+1. Go to "Product Variants" tab
+2. Select a Product Variant from the list
+3. Click "Export to Markdown" button
+4. Choose save location and filename
+5. Review generated markdown with:
+   - Complete configuration details
+   - All linked Product Features
+   - All dependent Capabilities and Technical Functions
+   - TRL dates and cross-dependencies
+   - Roadmap snapshot image
+6. See **EXPORT_GUIDE.md** for detailed documentation
+
 ### Query by Product Variant ⭐ NEW
 1. Go to "Readiness Matrix" or "Roadmap" tab
 2. Select Product Variant from dropdown
@@ -179,6 +192,7 @@ pip install -r requirements.txt
 
 ## What's New (November 2025)
 
+⭐ **Product Variant Markdown Export** - Comprehensive documentation generation with dependencies, TRL dates, cross-references, and roadmap snapshot
 ⭐ **Product Variants** - Manage product configurations
 ⭐ **Auto-fill Filters** - Select PV to populate all filters
 ⭐ **Configurations Management** - Centralized config options

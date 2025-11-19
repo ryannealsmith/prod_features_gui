@@ -109,6 +109,8 @@ class ProductFeaturesApp:
                   command=self.add_product_variant).pack(side=tk.LEFT, padx=2)
         ttk.Button(btn_frame, text="Delete", 
                   command=self.delete_product_variant).pack(side=tk.LEFT, padx=2)
+        ttk.Button(btn_frame, text="Export to Markdown", 
+                  command=self.export_product_variant_to_markdown).pack(side=tk.LEFT, padx=2)
         
         # Right pane - details
         right_frame = ttk.Frame(paned)
@@ -1509,6 +1511,438 @@ class ProductFeaturesApp:
                 self.load_product_variants()
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to delete: {str(e)}")
+    
+    def export_product_variant_to_markdown(self):
+        """Export the selected Product Variant to a comprehensive Markdown file."""
+        if not self.current_pv_id:
+            messagebox.showwarning("No Selection", "Please select a product variant to export.")
+            return
+        
+        try:
+            # Get product variant data
+            pv = self.db.get_product_variant_by_id(self.current_pv_id)
+            if not pv:
+                messagebox.showerror("Error", "Product variant not found.")
+                return
+            
+            # Get configuration details
+            config_details = {}
+            for config_type in ['platform', 'odd', 'environment', 'trailer', 'trl']:
+                if pv.get(config_type):
+                    configs = self.db.get_configurations(config_type.upper() if config_type != 'platform' else 'Platform')
+                    for cfg in configs:
+                        if cfg['code'] == pv[config_type]:
+                            config_details[config_type] = cfg
+                            break
+            
+            # Get linked product features
+            pfs = self.db.get_pv_product_features(self.current_pv_id)
+            
+            # Collect all capabilities and technical functions
+            all_capabilities = {}
+            all_technical_functions = {}
+            pf_dependencies = {}
+            
+            for pf in pfs:
+                # Get capabilities for this product feature
+                caps = self.db.get_pf_capabilities(pf['id'])
+                pf_dependencies[pf['id']] = {'capabilities': [], 'technical_functions': []}
+                
+                for cap in caps:
+                    cap_id = cap['id']
+                    if cap_id not in all_capabilities:
+                        all_capabilities[cap_id] = self.db.get_capability_by_id(cap_id)
+                    pf_dependencies[pf['id']]['capabilities'].append(cap_id)
+                    
+                    # Get technical functions for this capability
+                    tfs = self.db.get_cap_technical_functions(cap_id)
+                    for tf in tfs:
+                        tf_id = tf['id']
+                        if tf_id not in all_technical_functions:
+                            all_technical_functions[tf_id] = self.db.get_technical_function_by_id(tf_id)
+                        pf_dependencies[pf['id']]['technical_functions'].append(tf_id)
+            
+            # Build markdown content
+            md_content = []
+            md_content.append(f"# Product Variant: {pv['label']} - {pv['title']}\n")
+            md_content.append(f"**Export Date:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            md_content.append("---\n")
+            
+            # Product Variant Details
+            md_content.append("## Product Variant Overview\n")
+            md_content.append(f"**Label:** {pv['label']}\n\n")
+            md_content.append(f"**Title:** {pv['title']}\n\n")
+            if pv.get('description'):
+                md_content.append(f"**Description:**\n\n{pv['description']}\n\n")
+            if pv.get('due_date'):
+                md_content.append(f"**Target Date:** {pv['due_date']}\n\n")
+            
+            # Configuration Details
+            md_content.append("## Configuration Details\n")
+            
+            for config_type in ['platform', 'odd', 'environment', 'trailer', 'trl']:
+                if config_type in config_details:
+                    cfg = config_details[config_type]
+                    md_content.append(f"### {config_type.upper() if config_type != 'platform' else 'Platform'}\n")
+                    md_content.append(f"**Code:** {cfg['code']}\n\n")
+                    md_content.append(f"**Description:** {cfg['description']}\n\n")
+            
+            # Product Features
+            md_content.append("## Product Features\n")
+            md_content.append(f"Total Product Features: **{len(pfs)}**\n\n")
+            
+            for pf in pfs:
+                md_content.append(f"### {pf['label']}: {pf['name']}\n")
+                
+                if pf.get('details'):
+                    md_content.append(f"**Details:** {pf['details']}\n\n")
+                
+                # TRL dates
+                md_content.append("**TRL Completion Dates:**\n")
+                if pf.get('trl3_date'):
+                    md_content.append(f"- TRL3: {pf['trl3_date']}\n")
+                if pf.get('trl6_date'):
+                    md_content.append(f"- TRL6: {pf['trl6_date']}\n")
+                if pf.get('trl9_date'):
+                    md_content.append(f"- TRL9: {pf['trl9_date']}\n")
+                md_content.append("\n")
+                
+                # Configuration
+                md_content.append("**Configuration:**\n")
+                if pf.get('platform'):
+                    md_content.append(f"- Platform: {pf['platform']}\n")
+                if pf.get('odd'):
+                    md_content.append(f"- ODD: {pf['odd']}\n")
+                if pf.get('environment'):
+                    md_content.append(f"- Environment: {pf['environment']}\n")
+                if pf.get('trailer'):
+                    md_content.append(f"- Trailer: {pf['trailer']}\n")
+                md_content.append("\n")
+                
+                # Dependent Capabilities
+                cap_ids = pf_dependencies[pf['id']]['capabilities']
+                if cap_ids:
+                    md_content.append("**Dependent Capabilities:**\n")
+                    for cap_id in cap_ids:
+                        cap = all_capabilities[cap_id]
+                        md_content.append(f"- {cap['label']}: {cap['name']}\n")
+                    md_content.append("\n")
+                
+                # Dependent Technical Functions
+                tf_ids = pf_dependencies[pf['id']]['technical_functions']
+                if tf_ids:
+                    md_content.append("**Dependent Technical Functions:**\n")
+                    # Remove duplicates
+                    unique_tf_ids = list(set(tf_ids))
+                    for tf_id in unique_tf_ids:
+                        tf = all_technical_functions[tf_id]
+                        md_content.append(f"- {tf['label']}: {tf['name']}\n")
+                    md_content.append("\n")
+                
+                md_content.append("---\n\n")
+            
+            # All Capabilities Section
+            if all_capabilities:
+                md_content.append("## All Capabilities\n")
+                md_content.append(f"Total Unique Capabilities: **{len(all_capabilities)}**\n\n")
+                
+                for cap_id, cap in all_capabilities.items():
+                    md_content.append(f"### {cap['label']}: {cap['name']}\n")
+                    
+                    if cap.get('description'):
+                        md_content.append(f"**Description:** {cap['description']}\n\n")
+                    
+                    # TRL dates
+                    md_content.append("**TRL Completion Dates:**\n")
+                    if cap.get('trl3_date'):
+                        md_content.append(f"- TRL3: {cap['trl3_date']}\n")
+                    if cap.get('trl6_date'):
+                        md_content.append(f"- TRL6: {cap['trl6_date']}\n")
+                    if cap.get('trl9_date'):
+                        md_content.append(f"- TRL9: {cap['trl9_date']}\n")
+                    md_content.append("\n")
+                    
+                    # Cross-dependencies: Which Product Features use this capability
+                    dependent_pfs = [pf for pf in pfs if cap_id in pf_dependencies[pf['id']]['capabilities']]
+                    if dependent_pfs:
+                        md_content.append("**Used by Product Features:**\n")
+                        for dpf in dependent_pfs:
+                            md_content.append(f"- {dpf['label']}: {dpf['name']}\n")
+                        md_content.append("\n")
+                    
+                    # Technical Functions for this capability
+                    cap_tfs = self.db.get_cap_technical_functions(cap_id)
+                    if cap_tfs:
+                        md_content.append("**Dependent Technical Functions:**\n")
+                        for tf in cap_tfs:
+                            md_content.append(f"- {tf['label']}: {tf['name']}\n")
+                        md_content.append("\n")
+                    
+                    md_content.append("---\n\n")
+            
+            # All Technical Functions Section
+            if all_technical_functions:
+                md_content.append("## All Technical Functions\n")
+                md_content.append(f"Total Unique Technical Functions: **{len(all_technical_functions)}**\n\n")
+                
+                for tf_id, tf in all_technical_functions.items():
+                    md_content.append(f"### {tf['label']}: {tf['name']}\n")
+                    
+                    if tf.get('description'):
+                        md_content.append(f"**Description:** {tf['description']}\n\n")
+                    
+                    # TRL dates
+                    md_content.append("**TRL Completion Dates:**\n")
+                    if tf.get('trl3_date'):
+                        md_content.append(f"- TRL3: {tf['trl3_date']}\n")
+                    if tf.get('trl6_date'):
+                        md_content.append(f"- TRL6: {tf['trl6_date']}\n")
+                    if tf.get('trl9_date'):
+                        md_content.append(f"- TRL9: {tf['trl9_date']}\n")
+                    md_content.append("\n")
+                    
+                    # Cross-dependencies: Which Capabilities use this technical function
+                    dependent_caps = []
+                    for cap_id, cap in all_capabilities.items():
+                        cap_tfs = self.db.get_cap_technical_functions(cap_id)
+                        if any(ctf['id'] == tf_id for ctf in cap_tfs):
+                            dependent_caps.append(cap)
+                    
+                    if dependent_caps:
+                        md_content.append("**Used by Capabilities:**\n")
+                        for dcap in dependent_caps:
+                            md_content.append(f"- {dcap['label']}: {dcap['name']}\n")
+                        md_content.append("\n")
+                    
+                    md_content.append("---\n\n")
+            
+            # Generate roadmap snapshot
+            md_content.append("## Roadmap Snapshot\n")
+            md_content.append("Visual roadmap showing all dependencies (Product Features, Capabilities, Technical Functions) for this Product Variant.\n\n")
+            
+            # Create a temporary roadmap image
+            self.generate_pv_roadmap_snapshot(pv, pfs, all_capabilities, all_technical_functions, md_content)
+            
+            # Prompt user for save location
+            filename = filedialog.asksaveasfilename(
+                defaultextension=".md",
+                filetypes=[("Markdown files", "*.md"), ("All files", "*.*")],
+                initialfile=f"{pv['label']}_export.md"
+            )
+            
+            if filename:
+                with open(filename, 'w', encoding='utf-8') as f:
+                    f.write(''.join(md_content))
+                
+                messagebox.showinfo("Success", f"Product Variant exported successfully to:\n{filename}")
+        
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to export: {str(e)}")
+    
+    def generate_pv_roadmap_snapshot(self, pv, pfs, all_capabilities, all_technical_functions, md_content):
+        """Generate a roadmap snapshot for the product variant and add it to markdown content."""
+        try:
+            # Create a figure for the roadmap
+            fig, ax = plt.subplots(figsize=(14, 10), dpi=100)
+            
+            # TRL colors
+            trl_colors = {
+                'TRL3': '#DC3545',  # Red
+                'TRL6': '#FFC107',  # Amber
+                'TRL9': '#28A745'   # Green
+            }
+            
+            # Collect all items (PFs, Caps, TFs)
+            items = []
+            
+            # Add Product Features
+            for pf in pfs:
+                trl_dates = []
+                if pf.get('trl3_date'):
+                    try:
+                        trl_dates.append(('TRL3', datetime.strptime(pf['trl3_date'], '%Y-%m-%d')))
+                    except: pass
+                if pf.get('trl6_date'):
+                    try:
+                        trl_dates.append(('TRL6', datetime.strptime(pf['trl6_date'], '%Y-%m-%d')))
+                    except: pass
+                if pf.get('trl9_date'):
+                    try:
+                        trl_dates.append(('TRL9', datetime.strptime(pf['trl9_date'], '%Y-%m-%d')))
+                    except: pass
+                
+                if trl_dates:
+                    trl_dates.sort(key=lambda x: x[1])
+                    items.append({
+                        'type': 'PF',
+                        'label': pf['label'],
+                        'name': pf['name'][:30] + '...' if len(pf['name']) > 30 else pf['name'],
+                        'trl_dates': trl_dates
+                    })
+            
+            # Add Capabilities
+            for cap_id, cap in all_capabilities.items():
+                trl_dates = []
+                if cap.get('trl3_date'):
+                    try:
+                        trl_dates.append(('TRL3', datetime.strptime(cap['trl3_date'], '%Y-%m-%d')))
+                    except: pass
+                if cap.get('trl6_date'):
+                    try:
+                        trl_dates.append(('TRL6', datetime.strptime(cap['trl6_date'], '%Y-%m-%d')))
+                    except: pass
+                if cap.get('trl9_date'):
+                    try:
+                        trl_dates.append(('TRL9', datetime.strptime(cap['trl9_date'], '%Y-%m-%d')))
+                    except: pass
+                
+                if trl_dates:
+                    trl_dates.sort(key=lambda x: x[1])
+                    items.append({
+                        'type': 'CAP',
+                        'label': cap['label'],
+                        'name': cap['name'][:30] + '...' if len(cap['name']) > 30 else cap['name'],
+                        'trl_dates': trl_dates
+                    })
+            
+            # Add Technical Functions
+            for tf_id, tf in all_technical_functions.items():
+                trl_dates = []
+                if tf.get('trl3_date'):
+                    try:
+                        trl_dates.append(('TRL3', datetime.strptime(tf['trl3_date'], '%Y-%m-%d')))
+                    except: pass
+                if tf.get('trl6_date'):
+                    try:
+                        trl_dates.append(('TRL6', datetime.strptime(tf['trl6_date'], '%Y-%m-%d')))
+                    except: pass
+                if tf.get('trl9_date'):
+                    try:
+                        trl_dates.append(('TRL9', datetime.strptime(tf['trl9_date'], '%Y-%m-%d')))
+                    except: pass
+                
+                if trl_dates:
+                    trl_dates.sort(key=lambda x: x[1])
+                    items.append({
+                        'type': 'TF',
+                        'label': tf['label'],
+                        'name': tf['name'][:30] + '...' if len(tf['name']) > 30 else tf['name'],
+                        'trl_dates': trl_dates
+                    })
+            
+            if not items:
+                md_content.append("*No timeline data available for roadmap visualization.*\n\n")
+                return
+            
+            # Sort items by type and first TRL date
+            items.sort(key=lambda x: (x['type'], x['trl_dates'][0][1]))
+            
+            # Limit items for readability
+            if len(items) > 50:
+                items = items[:50]
+                title_suffix = f" (showing first 50 of {len(items)} items)"
+            else:
+                title_suffix = f" ({len(items)} items)"
+            
+            # Find date range
+            all_dates = []
+            for item in items:
+                all_dates.extend([d[1] for d in item['trl_dates']])
+            min_date = min(all_dates)
+            max_date = max(all_dates)
+            
+            # Add padding
+            date_range = (max_date - min_date).days
+            padding = max(30, date_range * 0.1)
+            plot_min_date = min_date - timedelta(days=padding)
+            plot_max_date = max_date + timedelta(days=padding)
+            
+            # Draw timeline
+            y_pos = 0
+            y_labels = []
+            y_positions = []
+            
+            for item in items:
+                y_labels.append(f"[{item['type']}] {item['label']}")
+                y_positions.append(y_pos)
+                
+                trl_dates = item['trl_dates']
+                
+                # Draw segments
+                for i in range(len(trl_dates)):
+                    start_date = trl_dates[i][1]
+                    start_trl = trl_dates[i][0]
+                    
+                    if i < len(trl_dates) - 1:
+                        end_date = trl_dates[i + 1][1]
+                        color = trl_colors[start_trl]
+                    else:
+                        end_date = start_date + timedelta(days=max(30, date_range * 0.05))
+                        color = trl_colors[start_trl]
+                    
+                    ax.barh(y_pos, (end_date - start_date).days,
+                           left=mdates.date2num(start_date),
+                           height=0.6,
+                           color=color,
+                           alpha=0.8,
+                           edgecolor='black',
+                           linewidth=0.5)
+                    
+                    ax.plot(mdates.date2num(start_date), y_pos, 'o',
+                           color='black', markersize=6, zorder=10)
+                
+                y_pos += 1
+            
+            # Configure axes
+            ax.set_ylim(-0.5, len(items) - 0.5)
+            ax.set_yticks(y_positions)
+            ax.set_yticklabels(y_labels, fontsize=8)
+            ax.invert_yaxis()
+            
+            # Format x-axis
+            ax.xaxis_date()
+            ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %y'))
+            ax.xaxis.set_major_locator(mdates.MonthLocator(interval=1))
+            plt.setp(ax.xaxis.get_majorticklabels(), rotation=45, ha='right')
+            
+            ax.set_xlabel('Timeline', fontsize=12, fontweight='bold')
+            ax.set_title(f'{pv["label"]} Roadmap{title_suffix}', fontsize=14, fontweight='bold')
+            ax.grid(True, axis='x', alpha=0.3, linestyle='--')
+            
+            # Add milestones
+            milestones = self.db.get_milestones()
+            for milestone in milestones:
+                try:
+                    milestone_date = datetime.strptime(milestone['date'], '%Y-%m-%d')
+                    if plot_min_date <= milestone_date <= plot_max_date:
+                        ax.axvline(x=mdates.date2num(milestone_date),
+                                  color='purple', linestyle='--', linewidth=2, alpha=0.7, zorder=5)
+                        ax.plot(mdates.date2num(milestone_date), -0.3,
+                               marker='*', color='gold', markersize=20,
+                               markeredgecolor='purple', markeredgewidth=1.5, zorder=15)
+                except: pass
+            
+            # Add legend
+            legend_elements = [
+                plt.Rectangle((0, 0), 1, 1, fc=trl_colors['TRL3'], alpha=0.8, edgecolor='black', label='TRL3'),
+                plt.Rectangle((0, 0), 1, 1, fc=trl_colors['TRL6'], alpha=0.8, edgecolor='black', label='TRL6'),
+                plt.Rectangle((0, 0), 1, 1, fc=trl_colors['TRL9'], alpha=0.8, edgecolor='black', label='TRL9')
+            ]
+            ax.legend(handles=legend_elements, loc='upper right')
+            
+            plt.tight_layout()
+            
+            # Save to temporary file
+            temp_dir = tempfile.gettempdir()
+            img_path = os.path.join(temp_dir, f"{pv['label']}_roadmap.png")
+            fig.savefig(img_path, dpi=150, bbox_inches='tight')
+            plt.close(fig)
+            
+            md_content.append(f"![Roadmap Snapshot]({img_path})\n\n")
+            md_content.append(f"*Roadmap image saved to: {img_path}*\n\n")
+            
+        except Exception as e:
+            md_content.append(f"*Error generating roadmap snapshot: {str(e)}*\n\n")
     
     def add_pv_product_feature(self):
         """Add a product feature to the current product variant."""
