@@ -34,12 +34,6 @@ for feature in features:
     label = feature['label']
     current_swimlane = feature.get('swimlane')
     
-    # Skip if swimlane is already set
-    if current_swimlane:
-        print(f"  Skipped: {label} (already has swimlane: {current_swimlane})")
-        skipped_count += 1
-        continue
-    
     # Find matching pattern in label
     matched_swimlane = None
     for pattern, swimlane in swimlane_mapping.items():
@@ -48,13 +42,20 @@ for feature in features:
             break
     
     if matched_swimlane:
-        # Update the feature
-        feature['swimlane'] = matched_swimlane
-        db.update_product_feature(feature['id'], feature)
-        print(f"  Updated: {label} -> {matched_swimlane}")
-        updated_count += 1
+        # Update if different from current or force update for consistency
+        if current_swimlane != matched_swimlane:
+            feature['swimlane'] = matched_swimlane
+            db.update_product_feature(feature['id'], feature)
+            print(f"  Updated: {label} ('{current_swimlane}' -> '{matched_swimlane}')")
+            updated_count += 1
+        else:
+            print(f"  Skipped: {label} (already correct: {current_swimlane})")
+            skipped_count += 1
     else:
-        print(f"  No match: {label}")
+        if current_swimlane:
+            print(f"  No match: {label} (keeping current: {current_swimlane})")
+        else:
+            print(f"  No match: {label}")
         skipped_count += 1
 
 print(f"\n=== Summary ===")

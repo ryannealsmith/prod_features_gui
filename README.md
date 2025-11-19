@@ -1,6 +1,6 @@
 # Product Features Management System
 
-A comprehensive GUI application for managing Product Features, Capabilities, and Technical Functions with many-to-many relationships, readiness matrix queries, and roadmap visualization.
+A comprehensive GUI application for managing Product Features, Capabilities, Technical Functions, Product Variants, and Configurations with many-to-many relationships, readiness matrix queries, and roadmap visualization.
 
 ## Features
 
@@ -9,205 +9,136 @@ A comprehensive GUI application for managing Product Features, Capabilities, and
 - Many-to-many relationships between:
   - Product Features ↔ Capabilities
   - Capabilities ↔ Technical Functions
+  - Product Variants ↔ Product Features
 - Full CRUD operations for all entities
+- **Current Data**: 77 Product Features, 116 Capabilities, 7 Technical Functions, 3 Product Variants, 26 Configurations
 
-### 2. **Product Features Management**
+### 2. **Product Variants Management** ⭐ NEW
+- Define product variant configurations (e.g., "Port Baseline", "Jebel Ali")
+- Specify platform, ODD, environment, and trailer configurations
+- Set target dates for product variants
+- Link product features to product variants
+- Integrated with Readiness Matrix and Roadmap filtering
+
+### 3. **Product Features Management**
 - View, add, edit, and delete product features
 - Track TRL (Technology Readiness Level) dates: TRL3, TRL6, TRL9
-- Filter by platform, ODD, environment
+- Filter by platform, ODD, environment, trailer
 - Link/unlink capabilities to product features
+- Link to product variants
+- Organize by swimlane categories
 
-### 3. **Capabilities Management**
+### 4. **Capabilities Management**
 - Manage capabilities with swimlane organization
 - Track dates and dependencies
-- Link to technical functions
+- Link to technical functions and product features
+- Filter and search capabilities
+- Organize by functional areas
 
-### 4. **Technical Functions Management**
+### 5. **Technical Functions Management**
 - Create and manage technical functions
 - Organize by swimlane
 - Link to capabilities
+- Track perception and reasoning functions
 
-### 5. **Readiness Matrix Query Interface**
+### 6. **Configurations Management** ⭐ NEW
+- Centralized management of configuration options:
+  - **Platforms**: Vehicle platforms (Terberg-1.2, Terberg-1.3, etc.)
+  - **ODDs**: Operational Design Domains
+  - **Environments**: Deployment environments (CFG-ENV-1.1, CFG-ENV-2.1, etc.)
+  - **Trailers**: Trailer types and configurations
+  - **TRLs**: Technology Readiness Level definitions
+- Add, edit, and delete configuration values
+- Used throughout the system for filtering and categorization
+
+### 7. **Readiness Matrix Query Interface**
+- **Product Variant Filter**: Select a product variant to auto-populate all configuration filters ⭐ NEW
 - Filter data by multiple criteria:
-  - Platform
-  - ODD (Operational Design Domain)
-  - Environment
-  - Swimlane
-- View filtered results in organized tabs
-- Export results to CSV
+  - Product Variant (auto-fills platform, ODD, environment, trailer)
+  - Platform, ODD, Environment, Trailer
+- **Query Modes**:
+  - **By Date**: Query what TRL level is achieved by a specific date
+  - **By TRL Level**: Query when a specific TRL level will be achieved
+- View filtered results in organized tabs with TRL status
+- **TRL Distribution Chart**: Visual pie chart showing TRL breakdown ⭐ NEW
+- Export results to JSON format
+- Color-coded indicators and calendar picker
 
-### 6. **Roadmap Visualization**
-- Timeline view of product features and capabilities
-- Visual representation based on TRL dates
-- Updates dynamically based on readiness matrix filters
+### 8. **Roadmap Visualization**
+- **Product Variant Filter**: Auto-populate filters ⭐ NEW
+- Timeline view with Gantt-style representation based on TRL dates
+- Swimlane organization
+- Product variant milestones as vertical lines ⭐ NEW
+- **Milestone Management**: Add custom milestones ⭐ NEW
 - Interactive matplotlib charts
+
+### 9. **Interactive Roadmap** ⭐ NEW
+- Dynamic Plotly-based interactive visualization
+- Filter by platform, ODD, environment, trailer
+- Hover tooltips with detailed information
+- Zoom, pan, and export functionality
 
 ## Installation
 
-### Prerequisites
+See QUICKSTART.md for detailed setup instructions.
 
-1. **Python 3.8 or higher**
-2. **Tkinter** (for GUI)
-
-On macOS, tkinter should come with Python. If you encounter issues:
+### Quick Setup
 ```bash
-# Using Homebrew
-brew install python-tk@3.13
-```
-
-On Ubuntu/Debian:
-```bash
-sudo apt-get install python3-tk
-```
-
-### Setup
-
-1. **Create a virtual environment** (recommended):
-```bash
+# Create virtual environment
 python3 -m venv .venv
-source .venv/bin/activate  # On macOS/Linux
-# or
-.venv\Scripts\activate  # On Windows
-```
+source .venv/bin/activate
 
-2. **Install required packages**:
-```bash
-pip install openpyxl pandas matplotlib tkcalendar
-```
+# Install dependencies
+pip install -r requirements.txt
 
-3. **Import data from Excel**:
-```bash
+# Import data
 python import_data.py
-```
 
-This will create `product_features.db` with all the data from the Excel spreadsheet.
-
-4. **Run the application**:
-```bash
+# Run application
 python app.py
 ```
 
-## Usage Guide
-
-### Product Features Tab
-- **View**: Browse all product features in the left panel
-- **Filter**: Use the filter dropdown to narrow results by platform
-- **Edit**: Select a feature to view/edit details in the right panel
-- **Add**: Click "Add New" to create a new product feature
-- **Delete**: Select a feature and click "Delete"
-- **Manage Capabilities**: 
-  - View linked capabilities in the list
-  - Click "Add Capability" to link existing capabilities
-  - Select and click "Remove Capability" to unlink
-
-### Capabilities Tab
-- Similar interface for managing capabilities
-- Edit swimlane, dates, and other attributes
-- View dependencies and dependents
-
-### Technical Functions Tab
-- Manage technical functions
-- Link to capabilities
-- Organize by swimlane
-
-### Readiness Matrix Tab
-- **Set Filters**: Choose criteria from dropdown menus
-- **Apply Query**: Click to filter results
-- **View Results**: 
-  - Product Features tab shows filtered features
-  - Capabilities tab shows filtered capabilities
-- **Export**: Save results to CSV file
-
-### Roadmap Tab
-- **Select View**: Choose to show Product Features, Capabilities, or Both
-- **Update Roadmap**: Click to refresh the timeline visualization
-- The chart displays milestones based on TRL dates
-- Color-coded: Blue for Product Features, Green for Capabilities
-
 ## Database Schema
 
-### Tables
+- **product_features** (77 records)
+- **capabilities** (116 records)
+- **technical_functions** (7 records)
+- **product_variants** (3 records) ⭐ NEW
+- **configurations** (26 records) ⭐ NEW
+- **milestones** ⭐ NEW
+- **pf_capabilities** (102 links)
+- **cap_technical_functions** (2 links)
+- **pv_product_features** ⭐ NEW
 
-1. **product_features**
-   - Core product feature data
-   - TRL dates (TRL3, TRL6, TRL9)
-   - Platform, ODD, Environment attributes
+## Key Files
 
-2. **capabilities**
-   - Capability definitions
-   - Swimlane organization
-   - TRL dates and dependencies
+- `app.py` - Main GUI (~3,900 lines)
+- `database.py` - Database operations (~800 lines)
+- `import_data.py` - Excel import
+- `populate_*_swimlanes.py` - Swimlane standardization
+- `export_to_sheets.py` - Google Sheets export
 
-3. **technical_functions**
-   - Technical function specifications
-   - Swimlane categorization
+## Recent Updates (November 2025)
 
-4. **pf_capabilities** (Junction table)
-   - Links product features to capabilities
-   - Many-to-many relationship
+- ✅ Product Variants with auto-fill filtering
+- ✅ Configurations management
+- ✅ Interactive Plotly roadmap
+- ✅ Milestone management
+- ✅ TRL distribution charts
+- ✅ Swimlane standardization (70 items corrected)
+- ✅ Calendar picker widgets
+- ✅ Dual query modes
+- ✅ Enhanced capability linking
 
-5. **cap_technical_functions** (Junction table)
-   - Links capabilities to technical functions
-   - Many-to-many relationship
+## Documentation
 
-## File Structure
-
-```
-prod_features_gui/
-├── Product Engineering Canonical Product Features.xlsx  # Source data
-├── product_features.db          # SQLite database
-├── database.py                  # Database operations
-├── import_data.py               # Excel import script
-├── app.py                       # Main GUI application
-├── analyze_excel.py             # Excel analysis utility
-└── README.md                    # This file
-```
-
-## Data Import Details
-
-The `import_data.py` script:
-- Reads from the Excel spreadsheet
-- Parses "Product Features", "Capabilities", and "Technical Functions (WIP)" sheets
-- Creates all database tables
-- Imports all data with proper relationships
-- Handles date parsing from various formats
-- Links related entities based on the spreadsheet data
-
-## Troubleshooting
-
-### Tkinter Not Available
-If you see `ModuleNotFoundError: No module named '_tkinter'`:
-- On macOS: Install via Homebrew: `brew install python-tk@3.13`
-- On Linux: `sudo apt-get install python3-tk`
-- Make sure you're using the system Python or a Python with tkinter support
-
-### Database Locked
-If you encounter database lock errors:
-- Close all instances of the application
-- Delete `product_features.db` and re-run `import_data.py`
-
-### Excel File Not Found
-Ensure `Product Engineering Canonical Product Features.xlsx` is in the same directory as the scripts.
-
-## Future Enhancements
-
-Potential additions:
-- User authentication and permissions
-- Change history/audit trail
-- Advanced search functionality
-- Gantt chart view for roadmap
-- Dependency graph visualization
-- Import/export capabilities for other formats
-- API for integration with other systems
-
-## Technical Details
-
-- **GUI Framework**: Tkinter (Python standard library)
-- **Database**: SQLite3
-- **Visualization**: Matplotlib
-- **Data Processing**: Pandas, openpyxl
-- **Architecture**: MVC-inspired with database layer separation
+- **README.md** - This file
+- **QUICKSTART.md** - Setup and usage guide
+- **PROJECT_SUMMARY.md** - Detailed project overview
+- **VISUAL_OVERVIEW.md** - Visual documentation
+- **EDIT_GUIDE.md** - Editing guide
+- **EXPORT_TO_SHEETS_README.md** - Google Sheets export
 
 ## Support
 
-For issues or questions, refer to the code comments or database schema documentation in `database.py`.
+For issues or questions, refer to code comments in `database.py` and `app.py`, or see the documentation files above.

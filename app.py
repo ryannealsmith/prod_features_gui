@@ -655,6 +655,16 @@ class ProductFeaturesApp:
         filter_frame.pack(fill=tk.X, padx=10, pady=10)
         
         row = 0
+        # Product Variant selector
+        ttk.Label(filter_frame, text="Product Variant:").grid(row=row, column=0, sticky=tk.W, padx=5, pady=3)
+        self.rm_product_variant = ttk.Combobox(filter_frame, state='readonly', width=25)
+        self.rm_product_variant.grid(row=row, column=1, sticky=tk.W, padx=5, pady=3)
+        self.rm_product_variant.bind('<<ComboboxSelected>>', self.on_rm_product_variant_selected)
+        
+        ttk.Label(filter_frame, text="(selects config filters below)", 
+                 font=('TkDefaultFont', 8, 'italic')).grid(row=row, column=2, columnspan=2, sticky=tk.W, padx=5, pady=3)
+        row += 1
+        
         ttk.Label(filter_frame, text="Platform:").grid(row=row, column=0, sticky=tk.W, padx=5, pady=3)
         self.rm_platform = ttk.Combobox(filter_frame, state='readonly', width=25)
         self.rm_platform.grid(row=row, column=1, sticky=tk.W, padx=5, pady=3)
@@ -813,35 +823,50 @@ class ProductFeaturesApp:
         tab = ttk.Frame(self.notebook)
         self.notebook.add(tab, text="Roadmap")
         
-        # Controls
+        # Controls - First row
         control_frame = ttk.Frame(tab)
         control_frame.pack(fill=tk.X, padx=10, pady=10)
         
-        ttk.Label(control_frame, text="View:").pack(side=tk.LEFT, padx=5)
-        self.roadmap_view = ttk.Combobox(control_frame, 
+        row1 = ttk.Frame(control_frame)
+        row1.pack(fill=tk.X, pady=(0, 5))
+        
+        ttk.Label(row1, text="View:").pack(side=tk.LEFT, padx=5)
+        self.roadmap_view = ttk.Combobox(row1, 
                                          values=['Product Features', 'Capabilities'],
                                          state='readonly',
                                          width=20)
         self.roadmap_view.set('Product Features')
         self.roadmap_view.pack(side=tk.LEFT, padx=5)
         
-        # Add filter controls
-        ttk.Label(control_frame, text="Platform:").pack(side=tk.LEFT, padx=(20, 5))
-        self.roadmap_platform = ttk.Combobox(control_frame, width=15)
+        # Add Product Variant filter
+        ttk.Label(row1, text="Product Variant:").pack(side=tk.LEFT, padx=(20, 5))
+        self.roadmap_product_variant = ttk.Combobox(row1, state='readonly', width=25)
+        self.roadmap_product_variant.pack(side=tk.LEFT, padx=5)
+        self.roadmap_product_variant.bind('<<ComboboxSelected>>', self.on_roadmap_product_variant_selected)
+        
+        ttk.Label(row1, text="(auto-fills filters below)", 
+                 font=('TkDefaultFont', 8, 'italic')).pack(side=tk.LEFT, padx=5)
+        
+        # Second row - Configuration filters
+        row2 = ttk.Frame(control_frame)
+        row2.pack(fill=tk.X)
+        
+        ttk.Label(row2, text="Platform:").pack(side=tk.LEFT, padx=(5, 5))
+        self.roadmap_platform = ttk.Combobox(row2, width=15)
         self.roadmap_platform.pack(side=tk.LEFT, padx=5)
         
-        ttk.Label(control_frame, text="ODD:").pack(side=tk.LEFT, padx=(10, 5))
-        self.roadmap_odd = ttk.Combobox(control_frame, width=15)
+        ttk.Label(row2, text="ODD:").pack(side=tk.LEFT, padx=(10, 5))
+        self.roadmap_odd = ttk.Combobox(row2, width=15)
         self.roadmap_odd.pack(side=tk.LEFT, padx=5)
         
-        ttk.Label(control_frame, text="Environment:").pack(side=tk.LEFT, padx=(10, 5))
-        self.roadmap_environment = ttk.Combobox(control_frame, width=15)
+        ttk.Label(row2, text="Environment:").pack(side=tk.LEFT, padx=(10, 5))
+        self.roadmap_environment = ttk.Combobox(row2, width=15)
         self.roadmap_environment.pack(side=tk.LEFT, padx=5)
         
-        ttk.Button(control_frame, text="Update Roadmap",
+        ttk.Button(row2, text="Update Roadmap",
                   command=self.update_roadmap).pack(side=tk.LEFT, padx=20)
         
-        ttk.Button(control_frame, text="Manage Milestones",
+        ttk.Button(row2, text="Manage Milestones",
                   command=self.manage_milestones).pack(side=tk.LEFT, padx=5)
         
         # Canvas for matplotlib
@@ -1178,6 +1203,11 @@ class ProductFeaturesApp:
     # Data loading methods
     def load_roadmap_filters(self):
         """Load filter options for Roadmap."""
+        # Product Variants
+        pvs = self.db.get_product_variants()
+        pv_options = [''] + [f"{pv['label']}: {pv['title']}" for pv in pvs]
+        self.roadmap_product_variant['values'] = pv_options
+        
         platforms = [''] + self.get_config_codes('Platform')
         odds = [''] + self.get_config_codes('ODD')
         environments = [''] + self.get_config_codes('Environment')
@@ -1185,6 +1215,25 @@ class ProductFeaturesApp:
         self.roadmap_platform['values'] = platforms
         self.roadmap_odd['values'] = odds
         self.roadmap_environment['values'] = environments
+    
+    def on_roadmap_product_variant_selected(self, event):
+        """Handle product variant selection on roadmap - auto-populate configuration filters."""
+        selected = self.roadmap_product_variant.get()
+        if not selected:
+            return
+        
+        # Extract PV label from the selection (format: "PV-X: Title")
+        pv_label = selected.split(':')[0].strip()
+        
+        # Get the product variant details
+        pvs = self.db.get_product_variants()
+        pv = next((p for p in pvs if p['label'] == pv_label), None)
+        
+        if pv:
+            # Auto-populate the configuration filters
+            self.roadmap_platform.set(pv.get('platform', ''))
+            self.roadmap_odd.set(pv.get('odd', ''))
+            self.roadmap_environment.set(pv.get('environment', ''))
     
     def load_pf_filters(self):
         """Load filter options for Product Features."""
@@ -2061,6 +2110,11 @@ class ProductFeaturesApp:
     
     def load_readiness_filters(self):
         """Load filter options for Readiness Matrix."""
+        # Product Variants
+        pvs = self.db.get_product_variants()
+        pv_options = [''] + [f"{pv['label']}: {pv['title']}" for pv in pvs]
+        self.rm_product_variant['values'] = pv_options
+        
         platforms = [''] + self.get_config_codes('Platform')
         self.rm_platform['values'] = platforms
         
@@ -2075,6 +2129,7 @@ class ProductFeaturesApp:
     
     def clear_readiness_filters(self):
         """Clear Readiness Matrix filters."""
+        self.rm_product_variant.set('')
         self.rm_platform.set('')
         self.rm_odd.set('')
         self.rm_environment.set('')
@@ -2082,6 +2137,26 @@ class ProductFeaturesApp:
         self.rm_date.delete(0, tk.END)
         self.rm_trl.set('')
         self.apply_readiness_query()
+    
+    def on_rm_product_variant_selected(self, event):
+        """Handle product variant selection - auto-populate configuration filters."""
+        selected = self.rm_product_variant.get()
+        if not selected:
+            return
+        
+        # Extract PV label from the selection (format: "PV-X: Title")
+        pv_label = selected.split(':')[0].strip()
+        
+        # Get the product variant details
+        pvs = self.db.get_product_variants()
+        pv = next((p for p in pvs if p['label'] == pv_label), None)
+        
+        if pv:
+            # Auto-populate the configuration filters
+            self.rm_platform.set(pv.get('platform', ''))
+            self.rm_odd.set(pv.get('odd', ''))
+            self.rm_environment.set(pv.get('environment', ''))
+            self.rm_trailer.set(pv.get('trailer', ''))
     
     def open_calendar_picker(self):
         """Open a calendar dialog to select a date."""
@@ -2155,6 +2230,21 @@ class ProductFeaturesApp:
         
         # Determine query mode
         query_mode = self.rm_query_mode.get()
+        
+        # Check if a product variant is selected
+        selected_pv = self.rm_product_variant.get()
+        pv_label = None
+        pv_id = None
+        
+        if selected_pv:
+            # Extract PV label from the selection (format: "PV-X: Title")
+            pv_label = selected_pv.split(':')[0].strip()
+            
+            # Get the product variant ID
+            pvs = self.db.get_product_variants()
+            pv = next((p for p in pvs if p['label'] == pv_label), None)
+            if pv:
+                pv_id = pv['id']
         
         # Update column headers based on mode
         if query_mode == 'date':
@@ -2235,8 +2325,20 @@ class ProductFeaturesApp:
             return 'N/A'
         
         # Load Product Features
-        pfs = self.db.get_product_features(pf_filters)
-        print(f"DEBUG: Found {len(pfs)} product features matching filters: {pf_filters}")
+        # If a product variant is selected, get only linked product features
+        # If no PFs are explicitly linked, fall back to filtering by PV configuration
+        if pv_id:
+            pfs = self.db.get_pv_product_features(pv_id)
+            print(f"DEBUG: Found {len(pfs)} product features explicitly linked to PV {pv_label}")
+            
+            # If no explicit links, use the PV's configuration to filter
+            if not pfs:
+                print(f"DEBUG: No explicit PF links, falling back to configuration filter")
+                pfs = self.db.get_product_features(pf_filters)
+                print(f"DEBUG: Found {len(pfs)} product features matching PV configuration: {pf_filters}")
+        else:
+            pfs = self.db.get_product_features(pf_filters)
+            print(f"DEBUG: Found {len(pfs)} product features matching filters: {pf_filters}")
         
         for pf in pfs:
             try:
@@ -2300,9 +2402,28 @@ class ProductFeaturesApp:
         print(f"DEBUG: Tree now has {len(self.rm_pf_tree.get_children())} items")
         
         # Load Capabilities
-        # Environment filter now handles CFG-ENV-2.1 including CFG-ENV-1.1 at database level
-        caps = self.db.get_capabilities(cap_filters)
-        print(f"DEBUG: Found {len(caps)} capabilities matching filters: {cap_filters}")
+        # If a product variant is selected, get capabilities linked to the PFs
+        if pv_id and pfs:
+            # Check if we got PFs from explicit links or from configuration filter
+            # If we have PFs, collect their linked capabilities
+            cap_ids_set = set()
+            for pf in pfs:
+                linked_caps = self.db.get_pf_capabilities(pf['id'])
+                for cap in linked_caps:
+                    cap_ids_set.add(cap['id'])
+            
+            # Get the full capability records
+            caps = []
+            for cap_id in cap_ids_set:
+                cap = self.db.get_capability_by_id(cap_id)
+                if cap:
+                    caps.append(cap)
+            print(f"DEBUG: Found {len(caps)} capabilities linked to PFs of PV {pv_label}")
+        else:
+            # Environment filter now handles CFG-ENV-2.1 including CFG-ENV-1.1 at database level
+            caps = self.db.get_capabilities(cap_filters)
+            print(f"DEBUG: Found {len(caps)} capabilities matching filters: {cap_filters}")
+        
         for cap in caps:
             try:
                 # Determine if required (using when_date field)
@@ -2348,9 +2469,6 @@ class ProductFeaturesApp:
                         query_trl
                     )
                     result_display = trl_date if trl_date != 'Not Planned' else '⚪ Not Planned'
-                
-                self.rm_cap_tree.insert('', tk.END,
-                                        values=(cap['label'], cap['name'], description, required_display, result_display))
                 
                 self.rm_cap_tree.insert('', tk.END,
                                         values=(cap['label'], cap['name'], description, required_display, result_display))
@@ -3061,6 +3179,35 @@ class ProductFeaturesApp:
                 except:
                     pass  # Skip invalid milestone dates
             
+            # Add product variant milestones (show all variants regardless of filters)
+            product_variants = self.db.get_product_variants()
+            for pv in product_variants:
+                if pv.get('due_date'):
+                    try:
+                        pv_date = datetime.strptime(pv['due_date'], '%Y-%m-%d')
+                        
+                        # Check if variant is within the visible date range
+                        if plot_min_date <= pv_date <= plot_max_date:
+                            # Draw vertical line (solid red)
+                            ax.axvline(x=mdates.date2num(pv_date), 
+                                      color='red', linestyle='-', linewidth=2.5, alpha=0.8, zorder=5)
+                            
+                            # Add target icon at the top
+                            ax.plot(mdates.date2num(pv_date), -0.3, 
+                                   marker='D', color='red', markersize=12, 
+                                   markeredgecolor='darkred', markeredgewidth=1.5, zorder=15)
+                            
+                            # Add product variant label as annotation
+                            ax.annotate(f"{pv['label']}: {pv['title']}", 
+                                       xy=(mdates.date2num(pv_date), -0.3),
+                                       xytext=(0, 25), textcoords='offset points',
+                                       ha='center', va='bottom',
+                                       fontsize=8, fontweight='bold',
+                                       bbox=dict(boxstyle='round,pad=0.3', facecolor='#ffcccc', 
+                                               edgecolor='red', alpha=0.9))
+                    except:
+                        pass  # Skip invalid product variant dates
+            
             # Add legend
             from matplotlib.patches import Patch
             from matplotlib.lines import Line2D
@@ -3069,7 +3216,9 @@ class ProductFeaturesApp:
                 Patch(facecolor=trl_colors['TRL6'], label='TRL 6 (Prototype)', alpha=0.8),
                 Patch(facecolor=trl_colors['TRL9'], label='TRL 9 (Production)', alpha=0.8),
                 Line2D([0], [0], marker='*', color='w', markerfacecolor='gold', 
-                      markeredgecolor='purple', markersize=12, label='Milestone')
+                      markeredgecolor='purple', markersize=12, label='Milestone'),
+                Line2D([0], [0], marker='D', color='w', markerfacecolor='red', 
+                      markeredgecolor='darkred', markersize=10, label='Product Variant')
             ]
             ax.legend(handles=legend_elements, loc='upper right', fontsize=9)
             
@@ -3451,8 +3600,8 @@ class ProductFeaturesApp:
             except:
                 pass
         
-        # Add product variant milestones
-        product_variants = self.db.get_product_variants(filters)
+        # Add product variant milestones (show all variants regardless of filters)
+        product_variants = self.db.get_product_variants()
         for pv in product_variants:
             if pv.get('due_date'):
                 try:

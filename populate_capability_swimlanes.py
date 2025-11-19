@@ -36,12 +36,6 @@ for capability in capabilities:
     label = capability['label']
     current_swimlane = capability.get('swimlane')
     
-    # Skip if swimlane is already set
-    if current_swimlane:
-        print(f"  Skipped: {label} (already has swimlane: {current_swimlane})")
-        skipped_count += 1
-        continue
-    
     # Find matching pattern in label
     matched_swimlane = None
     for pattern, swimlane in swimlane_mapping.items():
@@ -50,13 +44,20 @@ for capability in capabilities:
             break
     
     if matched_swimlane:
-        # Update the capability
-        capability['swimlane'] = matched_swimlane
-        db.update_capability(capability['id'], capability)
-        print(f"  Updated: {label} -> {matched_swimlane}")
-        updated_count += 1
+        # Update if different from current or force update for consistency
+        if current_swimlane != matched_swimlane:
+            capability['swimlane'] = matched_swimlane
+            db.update_capability(capability['id'], capability)
+            print(f"  Updated: {label} ('{current_swimlane}' -> '{matched_swimlane}')")
+            updated_count += 1
+        else:
+            print(f"  Skipped: {label} (already correct: {current_swimlane})")
+            skipped_count += 1
     else:
-        print(f"  No match: {label}")
+        if current_swimlane:
+            print(f"  No match: {label} (keeping current: {current_swimlane})")
+        else:
+            print(f"  No match: {label}")
         skipped_count += 1
 
 print(f"\n=== Summary ===")

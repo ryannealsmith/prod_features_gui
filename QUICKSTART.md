@@ -2,21 +2,17 @@
 
 ## Installation & Setup (macOS)
 
-### Option 1: Using Homebrew (Recommended)
-
-If you have Homebrew installed, this is the easiest way:
+### Recommended Setup
 
 ```bash
-# Install Python with tkinter support
+# Install Python with tkinter support (if needed)
 brew install python-tk@3.13
 
-# Navigate to the project directory
+# Navigate to project directory
 cd /Users/ryan-smith/Documents/code/prod_features_gui
 
-# Create virtual environment with Homebrew Python
-/opt/homebrew/bin/python3 -m venv .venv
-
-# Activate virtual environment
+# Create and activate virtual environment
+python3 -m venv .venv
 source .venv/bin/activate
 
 # Install dependencies
@@ -29,138 +25,174 @@ python import_data.py
 python app.py
 ```
 
-### Option 2: Using System Python
-
-If tkinter works with your system Python:
-
-```bash
-# Navigate to the project directory
-cd /Users/ryan-smith/Documents/code/prod_features_gui
-
-# Try running directly
-/usr/bin/python3 app.py
-```
-
-### Option 3: Using the Launch Script
-
-```bash
-cd /Users/ryan-smith/Documents/code/prod_features_gui
-./run.sh
-```
-
 ## First Time Setup
 
-1. **Ensure Excel file exists**: Make sure `Product Engineering Canonical Product Features.xlsx` is in the project directory
-
-2. **Import data** (if not already done):
-   ```bash
-   python import_data.py
-   ```
-   
-   This creates `product_features.db` with all your data.
-
-3. **Launch the app**:
-   ```bash
-   python app.py
-   ```
+1. **Ensure Excel file exists**: `Product Engineering Canonical Product Features.xlsx`
+2. **Import data**: `python import_data.py` (creates `product_features.db`)
+3. **Launch app**: `python app.py`
 
 ## Quick Feature Tour
 
-### 1. Product Features Tab
-- **Browse**: See all 94 product features
-- **Filter**: Click Platform dropdown to filter
-- **Edit**: Click any feature to see details on the right
-- **Capabilities**: See linked capabilities in the bottom section
-- **Save**: Make changes and click "Save Changes"
+### 1. Product Variants Tab ⭐ NEW
+- Manage product configurations (Port Baseline, Jebel Ali, etc.)
+- Set platform, ODD, environment, trailer
+- Define target dates
+- Link product features to variants
+- **Use Case**: Select in Readiness Matrix or Roadmap to auto-fill filters
 
-### 2. Capabilities Tab
-- Manage 90 capabilities
-- Edit details, dates, and dependencies
-- Similar interface to Product Features
+### 2. Product Features Tab
+- Browse 77 product features
+- Filter by platform, ODD, environment, trailer
+- Edit TRL dates (TRL3, TRL6, TRL9)
+- Link capabilities to features
+- Organize by swimlane
 
-### 3. Technical Functions Tab
+### 3. Capabilities Tab
+- Manage 116 capabilities
+- Link to technical functions and product features
+- Track dependencies
+- Edit dates and details
+
+### 4. Technical Functions Tab
 - Manage 7 technical functions
 - Link to capabilities
+- Organize by perception/reasoning
 
-### 4. Readiness Matrix Tab
-- **Filter Data**: Use dropdowns to filter by Platform, ODD, Environment, Swimlane
-- **Apply Query**: Click to see filtered results
-- **Two Views**: 
-  - Product Features tab shows matching features
-  - Capabilities tab shows matching capabilities
-- **Export**: Save filtered results to CSV
+### 5. Configurations Tab ⭐ NEW
+- Centralized configuration management
+- Add/edit Platforms, ODDs, Environments, Trailers, TRLs
+- Used throughout system for filtering
 
-### 5. Roadmap Tab
-- **Visualize Timeline**: See when features/capabilities reach TRL milestones
-- **Select View**: Choose Product Features, Capabilities, or Both
-- **Update**: Click "Update Roadmap" after changing filters
-- **Interactive**: Blue = Product Features, Green = Capabilities
+### 6. Readiness Matrix Tab
+- **Product Variant Filter**: Select PV to auto-fill all filters ⭐ NEW
+- Filter by Platform, ODD, Environment, Trailer
+- **Query Modes**:
+  - By Date: What TRL level by this date?
+  - By TRL: When will this TRL be achieved?
+- View results in Product Features and Capabilities tabs
+- **TRL Distribution Chart**: Pie chart showing breakdown ⭐ NEW
+- Calendar picker for date selection
+- Export to JSON
+
+### 7. Roadmap Tab
+- **Product Variant Filter**: Auto-fill filters ⭐ NEW
+- Gantt-style timeline with TRL milestones
+- Product variant target dates shown as vertical lines ⭐ NEW
+- **Manage Milestones**: Add custom milestones ⭐ NEW
+- Swimlane organization
+- Export capabilities
+
+### 8. Interactive Roadmap Tab ⭐ NEW
+- Plotly-based interactive visualization
+- Hover for details
+- Zoom and pan
+- Filter by platform, ODD, environment, trailer
+- Product variant milestones with diamond markers
 
 ## Common Tasks
 
-### Add a New Product Feature
+### Add a Product Variant ⭐ NEW
+1. Go to "Product Variants" tab
+2. Click "Add New"
+3. Enter Label (e.g., PV-4) and Title
+4. Click 📅 to select Target Date
+5. Select configurations
+6. Click "Save"
+
+### Query by Product Variant ⭐ NEW
+1. Go to "Readiness Matrix" or "Roadmap" tab
+2. Select Product Variant from dropdown
+3. Configuration filters auto-populate
+4. Click "Apply Query" or "Update Roadmap"
+
+### Add a Product Feature
 1. Go to "Product Features" tab
 2. Click "Add New"
-3. Enter Label (required) and Name (required)
-4. Click "Save"
+3. Enter Label and Name (required)
+4. Fill in other fields
+5. Click "Save"
 
 ### Link Capability to Product Feature
 1. Select a product feature
 2. Scroll to "Capabilities" section
 3. Click "Add Capability"
-4. Select from the list
+4. Select from list
 5. Click "Add"
 
-### Query Readiness Matrix
+### Query Readiness by Date
 1. Go to "Readiness Matrix" tab
-2. Select filters (e.g., Platform: "Terberg-1")
-3. Click "Apply Query"
-4. View results in sub-tabs
-5. Optionally click "Export Results" to save
+2. Select "By Date" query mode
+3. Click 📅 to pick date (or type YYYY-MM-DD)
+4. Select filters (Platform, ODD, etc.)
+5. Click "Apply Query"
+6. View TRL status in results tabs
+7. See TRL Distribution pie chart
 
 ### View Roadmap
 1. Go to "Roadmap" tab
-2. Select view type (Product Features/Capabilities/Both)
-3. Click "Update Roadmap"
-4. See timeline visualization with TRL dates
+2. Optionally select Product Variant to filter
+3. Select view (Product Features/Capabilities)
+4. Click "Update Roadmap"
+5. See timeline with TRL progression and milestones
+
+### Standardize Swimlanes
+```bash
+# Fix inconsistent swimlane names
+python populate_swimlanes.py           # Product Features
+python populate_capability_swimlanes.py # Capabilities  
+python populate_tf_swimlanes.py        # Technical Functions
+```
 
 ## Database Info
 
 - **File**: `product_features.db`
 - **Type**: SQLite
-- **Tables**: 5 (3 main entities + 2 junction tables)
-- **Records**: 
-  - 94 Product Features
-  - 90 Capabilities
+- **Current Data**: 
+  - 77 Product Features
+  - 116 Capabilities
   - 7 Technical Functions
-  - Plus relationship mappings
+  - 3 Product Variants ⭐ NEW
+  - 26 Configurations ⭐ NEW
+  - 102 PF-Capability links
+  - 2 Capability-TF links
 
 ## Troubleshooting
 
 ### "No module named '_tkinter'"
-You need Python with tkinter. Try:
 ```bash
 brew install python-tk@3.13
 ```
 
 ### "Database is locked"
-Close all instances of the app and try again.
+Close all app instances and try again.
 
-### "Excel file not found"
-Make sure `Product Engineering Canonical Product Features.xlsx` is in the project folder.
-
-### App won't start
-Check that you've imported data:
+### Reset Database
 ```bash
+rm product_features.db
 python import_data.py
 ```
 
-## Data Safety
+### Missing Dependencies
+```bash
+pip install -r requirements.txt
+```
 
-- All changes are saved to `product_features.db`
-- Original Excel file is never modified
-- To reset: Delete `product_features.db` and run `import_data.py` again
+## What's New (November 2025)
+
+⭐ **Product Variants** - Manage product configurations
+⭐ **Auto-fill Filters** - Select PV to populate all filters
+⭐ **Configurations Management** - Centralized config options
+⭐ **Interactive Roadmap** - Plotly visualization
+⭐ **Milestone Management** - Custom milestones on roadmaps
+⭐ **TRL Distribution Charts** - Visual readiness breakdown
+⭐ **Dual Query Modes** - By date or by TRL level
+⭐ **Calendar Pickers** - Easy date selection
+⭐ **Swimlane Standardization** - 70 items corrected
+⭐ **Enhanced Linking** - PFs to Capabilities and PVs
 
 ## Need Help?
 
-See the full `README.md` for comprehensive documentation.
+- **Full Documentation**: See `README.md`
+- **Project Overview**: See `PROJECT_SUMMARY.md`
+- **Visual Guide**: See `VISUAL_OVERVIEW.md`
+- **Code Comments**: Check `app.py` and `database.py`
