@@ -1716,14 +1716,7 @@ class ProductFeaturesApp:
                     
                     md_content.append("---\n\n")
             
-            # Generate roadmap snapshot
-            md_content.append("## Roadmap Snapshot\n")
-            md_content.append("Visual roadmap showing all dependencies (Product Features, Capabilities, Technical Functions) for this Product Variant.\n\n")
-            
-            # Create a temporary roadmap image
-            self.generate_pv_roadmap_snapshot(pv, pfs, all_capabilities, all_technical_functions, md_content)
-            
-            # Prompt user for save location
+            # Prompt user for save location BEFORE generating roadmap
             filename = filedialog.asksaveasfilename(
                 defaultextension=".md",
                 filetypes=[("Markdown files", "*.md"), ("All files", "*.*")],
@@ -1731,15 +1724,28 @@ class ProductFeaturesApp:
             )
             
             if filename:
+                # Generate roadmap snapshot (now that we know the save directory)
+                md_content.append("## Roadmap Snapshot\n")
+                md_content.append("Visual roadmap showing all dependencies (Product Features, Capabilities, Technical Functions) for this Product Variant.\n\n")
+                
+                # Get directory where markdown will be saved
+                save_dir = os.path.dirname(filename)
+                img_filename = f"{pv['label']}_roadmap.png"
+                
+                # Generate roadmap and save to same directory
+                self.generate_pv_roadmap_snapshot(pv, pfs, all_capabilities, all_technical_functions, 
+                                                   md_content, save_dir, img_filename)
+                
+                # Write markdown file
                 with open(filename, 'w', encoding='utf-8') as f:
                     f.write(''.join(md_content))
                 
-                messagebox.showinfo("Success", f"Product Variant exported successfully to:\n{filename}")
+                messagebox.showinfo("Success", f"Product Variant exported successfully to:\n{filename}\n\nRoadmap image saved as:\n{img_filename}")
         
         except Exception as e:
             messagebox.showerror("Error", f"Failed to export: {str(e)}")
     
-    def generate_pv_roadmap_snapshot(self, pv, pfs, all_capabilities, all_technical_functions, md_content):
+    def generate_pv_roadmap_snapshot(self, pv, pfs, all_capabilities, all_technical_functions, md_content, save_dir, img_filename):
         """Generate a roadmap snapshot for the product variant and add it to markdown content."""
         try:
             # Create a figure for the roadmap
@@ -1932,14 +1938,14 @@ class ProductFeaturesApp:
             
             plt.tight_layout()
             
-            # Save to temporary file
-            temp_dir = tempfile.gettempdir()
-            img_path = os.path.join(temp_dir, f"{pv['label']}_roadmap.png")
+            # Save to same directory as markdown file
+            img_path = os.path.join(save_dir, img_filename)
             fig.savefig(img_path, dpi=150, bbox_inches='tight')
             plt.close(fig)
             
-            md_content.append(f"![Roadmap Snapshot]({img_path})\n\n")
-            md_content.append(f"*Roadmap image saved to: {img_path}*\n\n")
+            # Use relative path in markdown (just the filename)
+            md_content.append(f"![Roadmap Snapshot](./{img_filename})\n\n")
+            md_content.append(f"*Roadmap image saved as: {img_filename} (in same directory as this file)*\n\n")
             
         except Exception as e:
             md_content.append(f"*Error generating roadmap snapshot: {str(e)}*\n\n")
