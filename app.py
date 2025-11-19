@@ -21,7 +21,7 @@ import tempfile
 class ProductFeaturesApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Product, Capability and Technical Roadmapping Management Tool")
+        self.root.title("Engineering Plan")
         self.root.geometry("1400x900")
         
         self.db = Database()
