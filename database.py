@@ -145,6 +145,36 @@ class Database:
             )
         ''')
         
+        # Product Variants table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS product_variants (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                label TEXT UNIQUE NOT NULL,
+                title TEXT NOT NULL,
+                description TEXT,
+                platform TEXT,
+                odd TEXT,
+                environment TEXT,
+                trailer TEXT,
+                trl TEXT,
+                due_date DATE NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        # Many-to-many: Product Variants to Product Features
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS pv_product_features (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                product_variant_id INTEGER NOT NULL,
+                product_feature_id INTEGER NOT NULL,
+                FOREIGN KEY (product_variant_id) REFERENCES product_variants(id) ON DELETE CASCADE,
+                FOREIGN KEY (product_feature_id) REFERENCES product_features(id) ON DELETE CASCADE,
+                UNIQUE(product_variant_id, product_feature_id)
+            )
+        ''')
+        
         # Create indexes for better query performance
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_pf_label ON product_features(label)')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_cap_label ON capabilities(label)')
@@ -154,6 +184,9 @@ class Database:
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_cap_tf_cap ON cap_technical_functions(capability_id)')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_cap_tf_tf ON cap_technical_functions(technical_function_id)')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_config_type ON configurations(config_type)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_pv_label ON product_variants(label)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_pv_pf_pv ON pv_product_features(product_variant_id)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_pv_pf_pf ON pv_product_features(product_feature_id)')
         
         self.connection.commit()
         
@@ -636,3 +669,120 @@ class Database:
         cursor = self.connection.cursor()
         cursor.execute('DELETE FROM configurations WHERE id = ?', (config_id,))
         self.connection.commit()
+    
+    # Product Variant CRUD operations
+    def add_product_variant(self, data: Dict) -> int:
+        """Add a new product variant."""
+        cursor = self.connection.cursor()
+        cursor.execute('''
+            INSERT INTO product_variants 
+            (label, title, description, platform, odd, environment, trailer, trl, due_date)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            data.get('label'),
+            data.get('title'),
+            data.get('description'),
+            data.get('platform'),
+            data.get('odd'),
+            data.get('environment'),
+            data.get('trailer'),
+            data.get('trl'),
+            data.get('due_date')
+        ))
+        self.connection.commit()
+        return cursor.lastrowid
+    
+    def get_product_variants(self, filters: Optional[Dict] = None) -> List[Dict]:
+        """Get all product variants with optional filters."""
+        cursor = self.connection.cursor()
+        query = 'SELECT * FROM product_variants WHERE 1=1'
+        params = []
+        
+        if filters:
+            if filters.get('platform'):
+                query += ' AND platform = ?'
+                params.append(filters['platform'])
+            if filters.get('odd'):
+                query += ' AND odd = ?'
+                params.append(filters['odd'])
+            if filters.get('environment'):
+                query += ' AND environment = ?'
+                params.append(filters['environment'])
+            if filters.get('trailer'):
+                query += ' AND trailer = ?'
+                params.append(filters['trailer'])
+            if filters.get('trl'):
+                query += ' AND trl = ?'
+                params.append(filters['trl'])
+        
+        query += ' ORDER BY due_date, label'
+        cursor.execute(query, params)
+        return [dict(row) for row in cursor.fetchall()]
+    
+    def get_product_variant_by_id(self, pv_id: int) -> Optional[Dict]:
+        """Get a product variant by ID."""
+        cursor = self.connection.cursor()
+        cursor.execute('SELECT * FROM product_variants WHERE id = ?', (pv_id,))
+        row = cursor.fetchone()
+        return dict(row) if row else None
+    
+    def update_product_variant(self, pv_id: int, data: Dict):
+        """Update a product variant."""
+        cursor = self.connection.cursor()
+        cursor.execute('''
+            UPDATE product_variants 
+            SET label = ?, title = ?, description = ?, platform = ?, odd = ?, 
+                environment = ?, trailer = ?, trl = ?, due_date = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        ''', (
+            data.get('label'),
+            data.get('title'),
+            data.get('description'),
+            data.get('platform'),
+            data.get('odd'),
+            data.get('environment'),
+            data.get('trailer'),
+            data.get('trl'),
+            data.get('due_date'),
+            pv_id
+        ))
+        self.connection.commit()
+    
+    def delete_product_variant(self, pv_id: int):
+        """Delete a product variant."""
+        cursor = self.connection.cursor()
+        cursor.execute('DELETE FROM product_variants WHERE id = ?', (pv_id,))
+        self.connection.commit()
+    
+    def link_pv_pf(self, pv_id: int, pf_id: int):
+        """Link a product variant to a product feature."""
+        cursor = self.connection.cursor()
+        try:
+            cursor.execute('''
+                INSERT INTO pv_product_features (product_variant_id, product_feature_id)
+                VALUES (?, ?)
+            ''', (pv_id, pf_id))
+            self.connection.commit()
+        except Exception:
+            pass  # Already linked
+    
+    def unlink_pv_pf(self, pv_id: int, pf_id: int):
+        """Unlink a product variant from a product feature."""
+        cursor = self.connection.cursor()
+        cursor.execute('''
+            DELETE FROM pv_product_features 
+            WHERE product_variant_id = ? AND product_feature_id = ?
+        ''', (pv_id, pf_id))
+        self.connection.commit()
+    
+    def get_pv_product_features(self, pv_id: int) -> List[Dict]:
+        """Get all product features linked to a product variant."""
+        cursor = self.connection.cursor()
+        cursor.execute('''
+            SELECT pf.* FROM product_features pf
+            JOIN pv_product_features pvpf ON pf.id = pvpf.product_feature_id
+            WHERE pvpf.product_variant_id = ?
+            ORDER BY pf.label
+        ''', (pv_id,))
+        return [dict(row) for row in cursor.fetchall()]

@@ -43,13 +43,168 @@ class ProductFeaturesApp:
         self.notebook.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
         
         # Create tabs
-        self.create_configurations_tab()
+        self.create_product_variants_tab()
         self.create_product_features_tab()
         self.create_capabilities_tab()
         self.create_technical_functions_tab()
         self.create_readiness_matrix_tab()
         self.create_roadmap_tab()
+        self.create_configurations_tab()
         self.create_interactive_roadmap_tab()
+    
+    def create_product_variants_tab(self):
+        """Create tab for managing Product Variants."""
+        tab = ttk.Frame(self.notebook)
+        self.notebook.add(tab, text="Product Variants")
+        
+        # Split into list and detail panes
+        paned = ttk.PanedWindow(tab, orient=tk.HORIZONTAL)
+        paned.pack(fill=tk.BOTH, expand=True)
+        
+        # Left pane - list
+        left_frame = ttk.Frame(paned)
+        paned.add(left_frame, weight=1)
+        
+        # List
+        list_frame = ttk.Frame(left_frame)
+        list_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        
+        # Scrollbar and Treeview
+        scroll = ttk.Scrollbar(list_frame)
+        scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        self.pv_tree = ttk.Treeview(list_frame, 
+                                     columns=('Label', 'Title', 'Platform', 'ODD', 'Environment', 'Trailer', 'TRL', 'Due Date'),
+                                     show='tree headings',
+                                     yscrollcommand=scroll.set)
+        scroll.config(command=self.pv_tree.yview)
+        
+        self.pv_tree.heading('Label', text='Label')
+        self.pv_tree.heading('Title', text='Title')
+        self.pv_tree.heading('Platform', text='Platform')
+        self.pv_tree.heading('ODD', text='ODD')
+        self.pv_tree.heading('Environment', text='Environment')
+        self.pv_tree.heading('Trailer', text='Trailer')
+        self.pv_tree.heading('TRL', text='TRL')
+        self.pv_tree.heading('Due Date', text='Due Date')
+        
+        self.pv_tree.column('#0', width=0, stretch=False)
+        self.pv_tree.column('Label', width=80)
+        self.pv_tree.column('Title', width=200)
+        self.pv_tree.column('Platform', width=100)
+        self.pv_tree.column('ODD', width=100)
+        self.pv_tree.column('Environment', width=100)
+        self.pv_tree.column('Trailer', width=100)
+        self.pv_tree.column('TRL', width=60)
+        self.pv_tree.column('Due Date', width=90)
+        
+        self.pv_tree.pack(fill=tk.BOTH, expand=True)
+        self.pv_tree.bind('<<TreeviewSelect>>', self.on_pv_select)
+        
+        # Buttons
+        btn_frame = ttk.Frame(left_frame)
+        btn_frame.pack(fill=tk.X, padx=5, pady=5)
+        
+        ttk.Button(btn_frame, text="Add New", 
+                  command=self.add_product_variant).pack(side=tk.LEFT, padx=2)
+        ttk.Button(btn_frame, text="Delete", 
+                  command=self.delete_product_variant).pack(side=tk.LEFT, padx=2)
+        
+        # Right pane - details
+        right_frame = ttk.Frame(paned)
+        paned.add(right_frame, weight=2)
+        
+        detail_frame = ttk.LabelFrame(right_frame, text="Details", padding=10)
+        detail_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        
+        # Create form
+        self.pv_form = {}
+        row = 0
+        
+        # Text entry fields
+        ttk.Label(detail_frame, text="Label*:").grid(row=row, column=0, sticky=tk.W, pady=3)
+        self.pv_form['label'] = ttk.Entry(detail_frame, width=30)
+        self.pv_form['label'].grid(row=row, column=1, sticky=tk.EW, pady=3)
+        row += 1
+        
+        ttk.Label(detail_frame, text="Title*:").grid(row=row, column=0, sticky=tk.W, pady=3)
+        self.pv_form['title'] = ttk.Entry(detail_frame, width=50)
+        self.pv_form['title'].grid(row=row, column=1, sticky=tk.EW, pady=3)
+        row += 1
+        
+        ttk.Label(detail_frame, text="Due Date*:").grid(row=row, column=0, sticky=tk.W, pady=3)
+        self.pv_form['due_date'] = ttk.Entry(detail_frame, width=15)
+        self.pv_form['due_date'].grid(row=row, column=1, sticky=tk.W, pady=3)
+        row += 1
+        
+        # Combobox fields for configurations
+        ttk.Label(detail_frame, text="Platform:").grid(row=row, column=0, sticky=tk.W, pady=3)
+        self.pv_form['platform'] = ttk.Combobox(detail_frame, width=47)
+        self.pv_form['platform']['values'] = [''] + self.get_config_codes('Platform')
+        self.pv_form['platform'].grid(row=row, column=1, sticky=tk.EW, pady=3)
+        row += 1
+        
+        ttk.Label(detail_frame, text="ODD:").grid(row=row, column=0, sticky=tk.W, pady=3)
+        self.pv_form['odd'] = ttk.Combobox(detail_frame, width=47)
+        self.pv_form['odd']['values'] = [''] + self.get_config_codes('ODD')
+        self.pv_form['odd'].grid(row=row, column=1, sticky=tk.EW, pady=3)
+        row += 1
+        
+        ttk.Label(detail_frame, text="Environment:").grid(row=row, column=0, sticky=tk.W, pady=3)
+        self.pv_form['environment'] = ttk.Combobox(detail_frame, width=47)
+        self.pv_form['environment']['values'] = [''] + self.get_config_codes('Environment')
+        self.pv_form['environment'].grid(row=row, column=1, sticky=tk.EW, pady=3)
+        row += 1
+        
+        ttk.Label(detail_frame, text="Trailer:").grid(row=row, column=0, sticky=tk.W, pady=3)
+        self.pv_form['trailer'] = ttk.Combobox(detail_frame, width=47)
+        self.pv_form['trailer']['values'] = [''] + self.get_config_codes('Trailer')
+        self.pv_form['trailer'].grid(row=row, column=1, sticky=tk.EW, pady=3)
+        row += 1
+        
+        ttk.Label(detail_frame, text="TRL:").grid(row=row, column=0, sticky=tk.W, pady=3)
+        self.pv_form['trl'] = ttk.Combobox(detail_frame, width=47, values=['', 'TRL3', 'TRL6', 'TRL9'])
+        self.pv_form['trl'].grid(row=row, column=1, sticky=tk.EW, pady=3)
+        row += 1
+        
+        # Description
+        ttk.Label(detail_frame, text="Description:").grid(row=row, column=0, sticky=tk.NW, pady=3)
+        self.pv_form['description'] = scrolledtext.ScrolledText(detail_frame, height=4, width=50)
+        self.pv_form['description'].grid(row=row, column=1, sticky=tk.EW, pady=3)
+        row += 1
+        
+        # Product Features section
+        ttk.Label(detail_frame, text="Product Features:").grid(row=row, column=0, sticky=tk.NW, pady=3)
+        
+        pf_frame = ttk.Frame(detail_frame)
+        pf_frame.grid(row=row, column=1, sticky=tk.EW, pady=3)
+        
+        pf_scroll = ttk.Scrollbar(pf_frame)
+        pf_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        self.pv_product_features_list = tk.Listbox(pf_frame, height=8, 
+                                                     yscrollcommand=pf_scroll.set)
+        self.pv_product_features_list.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        pf_scroll.config(command=self.pv_product_features_list.yview)
+        row += 1
+        
+        # Product Feature management buttons
+        pf_btn_frame = ttk.Frame(detail_frame)
+        pf_btn_frame.grid(row=row, column=1, sticky=tk.W, pady=3)
+        ttk.Button(pf_btn_frame, text="Add Product Feature", 
+                  command=self.add_pv_product_feature).pack(side=tk.LEFT, padx=2)
+        ttk.Button(pf_btn_frame, text="Remove Product Feature", 
+                  command=self.remove_pv_product_feature).pack(side=tk.LEFT, padx=2)
+        row += 1
+        
+        # Save button
+        ttk.Button(detail_frame, text="Save Changes", 
+                  command=self.save_product_variant).grid(row=row, column=1, sticky=tk.E, pady=10)
+        
+        detail_frame.columnconfigure(1, weight=1)
+        
+        self.current_pv_id = None
+        self.load_product_variants()
     
     def create_product_features_tab(self):
         """Create tab for managing Product Features."""
@@ -1171,6 +1326,201 @@ class ProductFeaturesApp:
                 self.load_product_features()
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to delete: {str(e)}")
+    
+    # Product Variant methods
+    def load_product_variants(self):
+        """Load product variants into the tree."""
+        for item in self.pv_tree.get_children():
+            self.pv_tree.delete(item)
+        
+        variants = self.db.get_product_variants()
+        
+        for pv in variants:
+            self.pv_tree.insert('', tk.END, iid=pv['id'],
+                               values=(pv['label'], 
+                                      pv['title'], 
+                                      pv['platform'] or '',
+                                      pv['odd'] or '',
+                                      pv['environment'] or '',
+                                      pv['trailer'] or '',
+                                      pv['trl'] or '',
+                                      pv['due_date'] or ''))
+    
+    def on_pv_select(self, event):
+        """Handle product variant selection."""
+        selection = self.pv_tree.selection()
+        if not selection:
+            return
+        
+        pv_id = int(selection[0])
+        self.current_pv_id = pv_id
+        
+        # Load variant details
+        pv = self.db.get_product_variant_by_id(pv_id)
+        if not pv:
+            return
+        
+        # Populate form fields
+        self.pv_form['label'].delete(0, tk.END)
+        self.pv_form['label'].insert(0, pv['label'])
+        
+        self.pv_form['title'].delete(0, tk.END)
+        self.pv_form['title'].insert(0, pv['title'])
+        
+        self.pv_form['due_date'].delete(0, tk.END)
+        self.pv_form['due_date'].insert(0, pv['due_date'] or '')
+        
+        self.pv_form['platform'].set(pv['platform'] or '')
+        self.pv_form['odd'].set(pv['odd'] or '')
+        self.pv_form['environment'].set(pv['environment'] or '')
+        self.pv_form['trailer'].set(pv['trailer'] or '')
+        self.pv_form['trl'].set(pv['trl'] or '')
+        
+        self.pv_form['description'].delete('1.0', tk.END)
+        if pv['description']:
+            self.pv_form['description'].insert('1.0', pv['description'])
+        
+        # Load linked product features
+        self.pv_product_features_list.delete(0, tk.END)
+        pfs = self.db.get_pv_product_features(pv_id)
+        for pf in pfs:
+            self.pv_product_features_list.insert(tk.END, f"{pf['label']} - {pf['name']}")
+    
+    def save_product_variant(self):
+        """Save current product variant."""
+        # Validate required fields
+        if not self.pv_form['label'].get():
+            messagebox.showwarning("Validation Error", "Label is required.")
+            return
+        if not self.pv_form['title'].get():
+            messagebox.showwarning("Validation Error", "Title is required.")
+            return
+        if not self.pv_form['due_date'].get():
+            messagebox.showwarning("Validation Error", "Due Date is required.")
+            return
+        
+        data = {
+            'label': self.pv_form['label'].get(),
+            'title': self.pv_form['title'].get(),
+            'description': self.pv_form['description'].get('1.0', tk.END).strip(),
+            'platform': self.pv_form['platform'].get() or None,
+            'odd': self.pv_form['odd'].get() or None,
+            'environment': self.pv_form['environment'].get() or None,
+            'trailer': self.pv_form['trailer'].get() or None,
+            'trl': self.pv_form['trl'].get() or None,
+            'due_date': self.pv_form['due_date'].get()
+        }
+        
+        try:
+            if self.current_pv_id:
+                self.db.update_product_variant(self.current_pv_id, data)
+                messagebox.showinfo("Success", "Product Variant updated successfully!")
+            else:
+                pv_id = self.db.add_product_variant(data)
+                self.current_pv_id = pv_id
+                messagebox.showinfo("Success", "Product Variant created successfully!")
+            
+            self.load_product_variants()
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to save: {str(e)}")
+    
+    def add_product_variant(self):
+        """Add a new Product Variant."""
+        # Clear form
+        self.current_pv_id = None
+        
+        for key, widget in self.pv_form.items():
+            if isinstance(widget, ttk.Entry):
+                widget.delete(0, tk.END)
+            elif isinstance(widget, ttk.Combobox):
+                widget.set('')
+            elif isinstance(widget, scrolledtext.ScrolledText):
+                widget.delete('1.0', tk.END)
+        
+        self.pv_product_features_list.delete(0, tk.END)
+    
+    def delete_product_variant(self):
+        """Delete selected Product Variant."""
+        if not self.current_pv_id:
+            messagebox.showwarning("No Selection", "Please select a product variant to delete.")
+            return
+        
+        if messagebox.askyesno("Confirm Delete", "Are you sure you want to delete this product variant?"):
+            try:
+                self.db.delete_product_variant(self.current_pv_id)
+                messagebox.showinfo("Success", "Product Variant deleted successfully!")
+                self.current_pv_id = None
+                self.load_product_variants()
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to delete: {str(e)}")
+    
+    def add_pv_product_feature(self):
+        """Add a product feature to the current product variant."""
+        if not self.current_pv_id:
+            messagebox.showwarning("No Selection", "Please select a product variant first.")
+            return
+        
+        # Open dialog to select product feature
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Add Product Feature")
+        dialog.geometry("500x400")
+        
+        ttk.Label(dialog, text="Select Product Feature:").pack(padx=10, pady=10)
+        
+        listbox = tk.Listbox(dialog, height=15)
+        listbox.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Load all product features
+        pfs = self.db.get_product_features()
+        pf_map = {}
+        for pf in pfs:
+            display_text = f"{pf['label']} - {pf['name']}"
+            listbox.insert(tk.END, display_text)
+            pf_map[display_text] = pf['id']
+        
+        def add_selected():
+            selection = listbox.curselection()
+            if not selection:
+                messagebox.showwarning("No Selection", "Please select a product feature.")
+                return
+            
+            selected_text = listbox.get(selection[0])
+            pf_id = pf_map[selected_text]
+            
+            self.db.link_pv_pf(self.current_pv_id, pf_id)
+            messagebox.showinfo("Success", "Product Feature linked successfully!")
+            dialog.destroy()
+            self.on_pv_select(None)  # Refresh the product features list
+        
+        ttk.Button(dialog, text="Add", command=add_selected).pack(pady=10)
+    
+    def remove_pv_product_feature(self):
+        """Remove a product feature from the current product variant."""
+        if not self.current_pv_id:
+            messagebox.showwarning("No Selection", "Please select a product variant first.")
+            return
+        
+        selection = self.pv_product_features_list.curselection()
+        if not selection:
+            messagebox.showwarning("No Selection", "Please select a product feature to remove.")
+            return
+        
+        # Get the product feature label from the selection
+        selected_text = self.pv_product_features_list.get(selection[0])
+        pf_label = selected_text.split(' - ')[0]
+        
+        # Find product feature ID
+        pfs = self.db.get_product_features()
+        pf_id = None
+        for pf in pfs:
+            if pf['label'] == pf_label:
+                pf_id = pf['id']
+                break
+        
+        if pf_id:
+            self.db.unlink_pv_pf(self.current_pv_id, pf_id)
+            messagebox.showinfo("Success", "Product Feature unlinked successfully!")
+            self.on_pv_select(None)  # Refresh
     
     def add_pf_capability(self):
         """Add a capability to the current product feature."""
@@ -3059,6 +3409,33 @@ class ProductFeaturesApp:
                 )
             except:
                 pass
+        
+        # Add product variant milestones
+        product_variants = self.db.get_product_variants(filters)
+        for pv in product_variants:
+            if pv.get('due_date'):
+                try:
+                    pv_date = datetime.strptime(pv['due_date'], '%Y-%m-%d')
+                    fig.add_vline(
+                        x=pv_date,
+                        line=dict(color='red', width=3, dash='solid'),
+                        opacity=0.8
+                    )
+                    fig.add_annotation(
+                        x=pv_date,
+                        y=1.12,
+                        text=f"🎯 {pv['label']}: {pv['title']}",
+                        xref="x",
+                        yref="paper",
+                        showarrow=False,
+                        font=dict(size=11, color='red', family='Arial Black'),
+                        bgcolor='rgba(255, 200, 200, 0.9)',
+                        bordercolor='red',
+                        borderwidth=2,
+                        borderpad=4
+                    )
+                except:
+                    pass
         
         # Update layout
         fig.update_layout(
