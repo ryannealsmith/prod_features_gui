@@ -47,9 +47,9 @@ class ProductFeaturesApp:
         self.create_product_features_tab()
         self.create_capabilities_tab()
         self.create_technical_functions_tab()
+        self.create_configurations_tab()
         self.create_readiness_matrix_tab()
         self.create_roadmap_tab()
-        self.create_configurations_tab()
         self.create_interactive_roadmap_tab()
     
     def create_product_variants_tab(self):
@@ -74,7 +74,7 @@ class ProductFeaturesApp:
         scroll.pack(side=tk.RIGHT, fill=tk.Y)
         
         self.pv_tree = ttk.Treeview(list_frame, 
-                                     columns=('Label', 'Title', 'Platform', 'ODD', 'Environment', 'Trailer', 'TRL', 'Due Date'),
+                                     columns=('Label', 'Title', 'Platform', 'ODD', 'Environment', 'Trailer', 'TRL', 'Target Date'),
                                      show='tree headings',
                                      yscrollcommand=scroll.set)
         scroll.config(command=self.pv_tree.yview)
@@ -86,7 +86,7 @@ class ProductFeaturesApp:
         self.pv_tree.heading('Environment', text='Environment')
         self.pv_tree.heading('Trailer', text='Trailer')
         self.pv_tree.heading('TRL', text='TRL')
-        self.pv_tree.heading('Due Date', text='Due Date')
+        self.pv_tree.heading('Target Date', text='Target Date')
         
         self.pv_tree.column('#0', width=0, stretch=False)
         self.pv_tree.column('Label', width=80)
@@ -96,7 +96,7 @@ class ProductFeaturesApp:
         self.pv_tree.column('Environment', width=100)
         self.pv_tree.column('Trailer', width=100)
         self.pv_tree.column('TRL', width=60)
-        self.pv_tree.column('Due Date', width=90)
+        self.pv_tree.column('Target Date', width=90)
         
         self.pv_tree.pack(fill=tk.BOTH, expand=True)
         self.pv_tree.bind('<<TreeviewSelect>>', self.on_pv_select)
@@ -132,9 +132,16 @@ class ProductFeaturesApp:
         self.pv_form['title'].grid(row=row, column=1, sticky=tk.EW, pady=3)
         row += 1
         
-        ttk.Label(detail_frame, text="Due Date*:").grid(row=row, column=0, sticky=tk.W, pady=3)
-        self.pv_form['due_date'] = ttk.Entry(detail_frame, width=15)
-        self.pv_form['due_date'].grid(row=row, column=1, sticky=tk.W, pady=3)
+        # Target Date with calendar picker
+        ttk.Label(detail_frame, text="Target Date*:").grid(row=row, column=0, sticky=tk.W, pady=3)
+        target_date_frame = ttk.Frame(detail_frame)
+        target_date_frame.grid(row=row, column=1, sticky=tk.W, pady=3)
+        
+        self.pv_form['due_date'] = ttk.Entry(target_date_frame, width=15)
+        self.pv_form['due_date'].pack(side=tk.LEFT, padx=(0, 5))
+        
+        ttk.Button(target_date_frame, text="📅 Select Date", 
+                  command=self.select_pv_target_date).pack(side=tk.LEFT)
         row += 1
         
         # Combobox fields for configurations
@@ -1396,7 +1403,7 @@ class ProductFeaturesApp:
             messagebox.showwarning("Validation Error", "Title is required.")
             return
         if not self.pv_form['due_date'].get():
-            messagebox.showwarning("Validation Error", "Due Date is required.")
+            messagebox.showwarning("Validation Error", "Target Date is required.")
             return
         
         data = {
@@ -1521,6 +1528,40 @@ class ProductFeaturesApp:
             self.db.unlink_pv_pf(self.current_pv_id, pf_id)
             messagebox.showinfo("Success", "Product Feature unlinked successfully!")
             self.on_pv_select(None)  # Refresh
+    
+    def select_pv_target_date(self):
+        """Open a calendar dialog to select a target date for product variant."""
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Select Target Date")
+        dialog.geometry("300x300")
+        
+        ttk.Label(dialog, text="Select Target Date:", font=('Arial', 12, 'bold')).pack(padx=10, pady=10)
+        
+        # Get current date from entry or use today
+        current_date = self.pv_form['due_date'].get()
+        if current_date:
+            try:
+                date_obj = datetime.strptime(current_date, '%Y-%m-%d')
+                cal = Calendar(dialog, selectmode='day', 
+                             year=date_obj.year, month=date_obj.month, day=date_obj.day)
+            except:
+                cal = Calendar(dialog, selectmode='day')
+        else:
+            cal = Calendar(dialog, selectmode='day')
+        
+        cal.pack(padx=10, pady=10)
+        
+        def set_date():
+            selected_date = cal.get_date()
+            # Convert from MM/DD/YY to YYYY-MM-DD
+            date_obj = datetime.strptime(selected_date, '%m/%d/%y')
+            formatted_date = date_obj.strftime('%Y-%m-%d')
+            self.pv_form['due_date'].delete(0, tk.END)
+            self.pv_form['due_date'].insert(0, formatted_date)
+            dialog.destroy()
+        
+        ttk.Button(dialog, text="Select", command=set_date).pack(pady=10)
+        ttk.Button(dialog, text="Cancel", command=dialog.destroy).pack(pady=5)
     
     def add_pf_capability(self):
         """Add a capability to the current product feature."""
