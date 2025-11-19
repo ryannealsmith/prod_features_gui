@@ -265,6 +265,52 @@ def import_data():
                     db.link_cap_tf(cap_label_to_id[cap_label], tf_id)
                     print(f"  Linked {cap_label} -> {tf_label}")
     
+    # Import Configurations
+    print("\nImporting Configurations...")
+    config_df = pd.read_excel(excel_file, sheet_name='Configurations')
+    
+    # Map Excel swimlane names to database config_type values
+    type_map = {
+        'Platform': 'Platform',
+        'Operational Environment': 'ODD',
+        'Environmental conditions': 'Environment',
+        'Cargo': 'Trailer'
+    }
+    
+    current_type = None
+    config_count = 0
+    
+    for idx, row in config_df.iterrows():
+        # Check if this row defines a new type (Swimlane column is not empty)
+        swimlane = clean_text(row.get('Swimlane'))
+        if swimlane:
+            current_type = type_map.get(swimlane)
+            if current_type:
+                print(f"\n  Processing {current_type} configurations...")
+        
+        # Get the label (code) and description
+        label = clean_text(row.get('Label'))
+        description = clean_text(row.get('Configuration'))
+        
+        # Skip rows without label or description, or if no type is set
+        if not label or not description or not current_type:
+            continue
+        
+        config_data = {
+            'config_type': current_type,
+            'code': label,
+            'description': description
+        }
+        
+        try:
+            db.add_configuration(config_data)
+            config_count += 1
+            print(f"    Added: {label} ({current_type})")
+        except Exception as e:
+            print(f"    Error adding {label}: {e}")
+    
+    print(f"\nImported {config_count} Configurations")
+    
     db.close()
     print("\n✓ Data import completed successfully!")
 
