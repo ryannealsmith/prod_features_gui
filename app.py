@@ -4334,12 +4334,21 @@ class ProductFeaturesApp:
             # Gather all data from database
             export_data = {
                 'export_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'product_variants': [],
                 'product_features': [],
                 'capabilities': [],
                 'technical_functions': [],
+                'configurations': [],
+                'milestones': [],
+                'pv_product_features_relationships': [],
                 'pf_capabilities_relationships': [],
                 'cap_technical_functions_relationships': []
             }
+            
+            # Export Product Variants
+            pvs = self.db.get_product_variants()
+            for pv in pvs:
+                export_data['product_variants'].append(pv)
             
             # Export Product Features
             pfs = self.db.get_product_features()
@@ -4355,6 +4364,28 @@ class ProductFeaturesApp:
             tfs = self.db.get_technical_functions()
             for tf in tfs:
                 export_data['technical_functions'].append(tf)
+            
+            # Export Configurations
+            for config_type in ['Platform', 'ODD', 'Environment', 'Trailer', 'TRL']:
+                configs = self.db.get_configurations(config_type)
+                for config in configs:
+                    export_data['configurations'].append(config)
+            
+            # Export Milestones
+            milestones = self.db.get_milestones()
+            for milestone in milestones:
+                export_data['milestones'].append(milestone)
+            
+            # Export relationships - Product Variants to Product Features
+            for pv in pvs:
+                linked_pfs = self.db.get_pv_product_features(pv['id'])
+                for pf in linked_pfs:
+                    export_data['pv_product_features_relationships'].append({
+                        'product_variant_id': pv['id'],
+                        'product_variant_label': pv['label'],
+                        'product_feature_id': pf['id'],
+                        'product_feature_label': pf['label']
+                    })
             
             # Export relationships - Product Features to Capabilities
             for pf in pfs:
@@ -4385,9 +4416,13 @@ class ProductFeaturesApp:
             messagebox.showinfo(
                 "Export Successful",
                 f"Database exported successfully to:\n{filepath}\n\n"
+                f"Product Variants: {len(export_data['product_variants'])}\n"
                 f"Product Features: {len(export_data['product_features'])}\n"
                 f"Capabilities: {len(export_data['capabilities'])}\n"
                 f"Technical Functions: {len(export_data['technical_functions'])}\n"
+                f"Configurations: {len(export_data['configurations'])}\n"
+                f"Milestones: {len(export_data['milestones'])}\n"
+                f"PV-PF Links: {len(export_data['pv_product_features_relationships'])}\n"
                 f"PF-Capability Links: {len(export_data['pf_capabilities_relationships'])}\n"
                 f"Capability-TF Links: {len(export_data['cap_technical_functions_relationships'])}"
             )
