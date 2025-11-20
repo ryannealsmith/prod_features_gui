@@ -280,6 +280,13 @@ class Database:
         cursor.execute('SELECT * FROM product_features WHERE id = ?', (pf_id,))
         row = cursor.fetchone()
         return dict(row) if row else None
+    
+    def get_product_feature_by_label(self, label: str) -> Optional[Dict]:
+        """Get a product feature by label."""
+        cursor = self.connection.cursor()
+        cursor.execute('SELECT * FROM product_features WHERE label = ?', (label,))
+        row = cursor.fetchone()
+        return dict(row) if row else None
         
     def update_product_feature(self, pf_id: int, data: Dict):
         """Update a product feature."""
@@ -401,6 +408,13 @@ class Database:
         cursor.execute('SELECT * FROM capabilities WHERE id = ?', (cap_id,))
         row = cursor.fetchone()
         return dict(row) if row else None
+    
+    def get_capability_by_label(self, label: str) -> Optional[Dict]:
+        """Get a capability by label."""
+        cursor = self.connection.cursor()
+        cursor.execute('SELECT * FROM capabilities WHERE label = ?', (label,))
+        row = cursor.fetchone()
+        return dict(row) if row else None
         
     def update_capability(self, cap_id: int, data: Dict):
         """Update a capability."""
@@ -470,7 +484,14 @@ class Database:
         cursor.execute('SELECT * FROM technical_functions WHERE id = ?', (tf_id,))
         row = cursor.fetchone()
         return dict(row) if row else None
-        
+    
+    def get_technical_function_by_label(self, label: str) -> Optional[Dict]:
+        """Get a technical function by label."""
+        cursor = self.connection.cursor()
+        cursor.execute('SELECT * FROM technical_functions WHERE label = ?', (label,))
+        row = cursor.fetchone()
+        return dict(row) if row else None
+    
     def update_technical_function(self, tf_id: int, data: Dict):
         """Update a technical function."""
         cursor = self.connection.cursor()
@@ -723,6 +744,13 @@ class Database:
         """Get a product variant by ID."""
         cursor = self.connection.cursor()
         cursor.execute('SELECT * FROM product_variants WHERE id = ?', (pv_id,))
+        row = cursor.fetchone()
+        return dict(row) if row else None
+    
+    def get_product_variant_by_label(self, label: str) -> Optional[Dict]:
+        """Get a product variant by label."""
+        cursor = self.connection.cursor()
+        cursor.execute('SELECT * FROM product_variants WHERE label = ?', (label,))
         row = cursor.fetchone()
         return dict(row) if row else None
     

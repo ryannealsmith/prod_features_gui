@@ -35,6 +35,7 @@ class ProductFeaturesApp:
         file_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="File", menu=file_menu)
         file_menu.add_command(label="Export to JSON", command=self.export_to_json)
+        file_menu.add_command(label="Import JSON", command=self.import_from_json)
         file_menu.add_separator()
         file_menu.add_command(label="Exit", command=root.quit)
         
@@ -4320,15 +4321,8 @@ class ProductFeaturesApp:
     
     def export_to_json(self):
         """Export all database content to a JSON file."""
-        # Ask user for file location
-        filepath = filedialog.asksaveasfilename(
-            defaultextension=".json",
-            filetypes=[("JSON files", "*.json"), ("All files", "*.*")],
-            title="Export Database to JSON"
-        )
-        
-        if not filepath:
-            return
+        # Automatically save to root directory with fixed filename
+        filepath = os.path.join(os.path.dirname(__file__), 'engineering_plan_db.json')
         
         try:
             # Gather all data from database
@@ -4429,6 +4423,170 @@ class ProductFeaturesApp:
             
         except Exception as e:
             messagebox.showerror("Export Error", f"Failed to export database:\n{str(e)}")
+    
+    def import_from_json(self):
+        """Import database content from engineering_plan_db.json file."""
+        # Check for the file in the root directory
+        filepath = os.path.join(os.path.dirname(__file__), 'engineering_plan_db.json')
+        
+        if not os.path.exists(filepath):
+            messagebox.showerror(
+                "Import Error", 
+                f"File not found:\n{filepath}\n\n"
+                "Please ensure 'engineering_plan_db.json' exists in the root directory."
+            )
+            return
+        
+        # Confirm before importing
+        response = messagebox.askyesno(
+            "Confirm Import",
+            f"This will import data from:\n{filepath}\n\n"
+            "Existing records with matching labels will be updated.\n"
+            "New records will be added.\n\n"
+            "Continue?"
+        )
+        
+        if not response:
+            return
+        
+        try:
+            # Read JSON file
+            with open(filepath, 'r', encoding='utf-8') as f:
+                import_data = json.load(f)
+            
+            stats = {
+                'product_variants': {'added': 0, 'updated': 0},
+                'product_features': {'added': 0, 'updated': 0},
+                'capabilities': {'added': 0, 'updated': 0},
+                'technical_functions': {'added': 0, 'updated': 0},
+                'configurations': {'added': 0, 'updated': 0},
+                'milestones': {'added': 0, 'updated': 0},
+                'relationships': 0
+            }
+            
+            # Import Product Variants
+            for pv_data in import_data.get('product_variants', []):
+                # Check if exists by label
+                existing = self.db.get_product_variant_by_label(pv_data['label'])
+                if existing:
+                    self.db.update_product_variant(existing['id'], pv_data)
+                    stats['product_variants']['updated'] += 1
+                else:
+                    self.db.add_product_variant(pv_data)
+                    stats['product_variants']['added'] += 1
+            
+            # Import Product Features
+            for pf_data in import_data.get('product_features', []):
+                existing = self.db.get_product_feature_by_label(pf_data['label'])
+                if existing:
+                    self.db.update_product_feature(existing['id'], pf_data)
+                    stats['product_features']['updated'] += 1
+                else:
+                    self.db.add_product_feature(pf_data)
+                    stats['product_features']['added'] += 1
+            
+            # Import Capabilities
+            for cap_data in import_data.get('capabilities', []):
+                existing = self.db.get_capability_by_label(cap_data['label'])
+                if existing:
+                    self.db.update_capability(existing['id'], cap_data)
+                    stats['capabilities']['updated'] += 1
+                else:
+                    self.db.add_capability(cap_data)
+                    stats['capabilities']['added'] += 1
+            
+            # Import Technical Functions
+            for tf_data in import_data.get('technical_functions', []):
+                existing = self.db.get_technical_function_by_label(tf_data['label'])
+                if existing:
+                    self.db.update_technical_function(existing['id'], tf_data)
+                    stats['technical_functions']['updated'] += 1
+                else:
+                    self.db.add_technical_function(tf_data)
+                    stats['technical_functions']['added'] += 1
+            
+            # Import Configurations
+            for config_data in import_data.get('configurations', []):
+                # Check if configuration exists (by config_type and code)
+                existing_configs = self.db.get_configurations(config_data['config_type'])
+                existing = next((c for c in existing_configs if c['code'] == config_data['code']), None)
+                if existing:
+                    self.db.update_configuration(existing['id'], config_data)
+                    stats['configurations']['updated'] += 1
+                else:
+                    self.db.add_configuration(config_data)
+                    stats['configurations']['added'] += 1
+            
+            # Import Milestones
+            for milestone_data in import_data.get('milestones', []):
+                # Check if milestone exists by name
+                existing_milestones = self.db.get_milestones()
+                existing = next((m for m in existing_milestones if m['name'] == milestone_data['name']), None)
+                if existing:
+                    self.db.update_milestone(existing['id'], milestone_data)
+                    stats['milestones']['updated'] += 1
+                else:
+                    self.db.add_milestone(milestone_data)
+                    stats['milestones']['added'] += 1
+            
+            # Clear existing relationships and re-import
+            cursor = self.db.connection.cursor()
+            cursor.execute("DELETE FROM pv_product_features")
+            cursor.execute("DELETE FROM pf_capabilities")
+            cursor.execute("DELETE FROM cap_technical_functions")
+            
+            # Import PV-PF Relationships
+            for rel in import_data.get('pv_product_features_relationships', []):
+                pv = self.db.get_product_variant_by_label(rel['product_variant_label'])
+                pf = self.db.get_product_feature_by_label(rel['product_feature_label'])
+                if pv and pf:
+                    self.db.link_pv_pf(pv['id'], pf['id'])
+                    stats['relationships'] += 1
+            
+            # Import PF-Capability Relationships
+            for rel in import_data.get('pf_capabilities_relationships', []):
+                pf = self.db.get_product_feature_by_label(rel['product_feature_label'])
+                cap = self.db.get_capability_by_label(rel['capability_label'])
+                if pf and cap:
+                    self.db.link_pf_capability(pf['id'], cap['id'])
+                    stats['relationships'] += 1
+            
+            # Import Capability-TF Relationships
+            for rel in import_data.get('cap_technical_functions_relationships', []):
+                cap = self.db.get_capability_by_label(rel['capability_label'])
+                tf = self.db.get_technical_function_by_label(rel['technical_function_label'])
+                if cap and tf:
+                    self.db.link_cap_tf(cap['id'], tf['id'])
+                    stats['relationships'] += 1
+            
+            self.db.connection.commit()
+            
+            # Refresh all tabs
+            self.refresh_product_variants()
+            self.refresh_product_features()
+            self.refresh_capabilities()
+            self.refresh_technical_functions()
+            self.refresh_configurations()
+            
+            # Show success message
+            messagebox.showinfo(
+                "Import Successful",
+                f"Database imported successfully from:\n{filepath}\n\n"
+                f"Product Variants: {stats['product_variants']['added']} added, {stats['product_variants']['updated']} updated\n"
+                f"Product Features: {stats['product_features']['added']} added, {stats['product_features']['updated']} updated\n"
+                f"Capabilities: {stats['capabilities']['added']} added, {stats['capabilities']['updated']} updated\n"
+                f"Technical Functions: {stats['technical_functions']['added']} added, {stats['technical_functions']['updated']} updated\n"
+                f"Configurations: {stats['configurations']['added']} added, {stats['configurations']['updated']} updated\n"
+                f"Milestones: {stats['milestones']['added']} added, {stats['milestones']['updated']} updated\n"
+                f"Relationships: {stats['relationships']} linked"
+            )
+            
+        except FileNotFoundError:
+            messagebox.showerror("Import Error", f"File not found:\n{filepath}")
+        except json.JSONDecodeError as e:
+            messagebox.showerror("Import Error", f"Invalid JSON format:\n{str(e)}")
+        except Exception as e:
+            messagebox.showerror("Import Error", f"Failed to import database:\n{str(e)}")
     
     def __del__(self):
         """Cleanup."""

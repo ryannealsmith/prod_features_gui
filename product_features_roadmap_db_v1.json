@@ -1,49 +1,5 @@
 {
-  "export_date": "2025-11-20 04:35:00",
-  "product_variants": [
-    {
-      "id": 1,
-      "label": "PV-1",
-      "title": "Port Baseline",
-      "description": "Projection of cloud onto filament",
-      "platform": "Terberg-1.2",
-      "odd": "CFG-ODD-1.1",
-      "environment": "CFG-ENV-1.1",
-      "trailer": "CFG-CGO-1.1.1",
-      "trl": "TRL6",
-      "due_date": "2026-01-31",
-      "created_at": "2025-11-19 14:31:14",
-      "updated_at": "2025-11-19 17:24:44"
-    },
-    {
-      "id": 2,
-      "label": "PV-2",
-      "title": "Jebel Ali",
-      "description": "Jebel Ali feature set (capability progression)",
-      "platform": "Terberg-1.3",
-      "odd": "CFG-ODD-1.1",
-      "environment": "CFG-ENV-1.1",
-      "trailer": "CFG-CGO-1.1.1",
-      "trl": "TRL9",
-      "due_date": "2026-06-30",
-      "created_at": "2025-11-19 14:32:37",
-      "updated_at": "2025-11-19 14:32:37"
-    },
-    {
-      "id": 3,
-      "label": "PV-3",
-      "title": "TBD",
-      "description": "LATER",
-      "platform": "Terberg-1",
-      "odd": "CFG-ODD-1.1",
-      "environment": "CFG-ENV-1.1",
-      "trailer": "CFG-CGO-1.1.1",
-      "trl": "TRL9",
-      "due_date": "2026-07-31",
-      "created_at": "2025-11-19 14:33:44",
-      "updated_at": "2025-11-19 14:33:44"
-    }
-  ],
+  "export_date": "2025-11-19 06:56:35",
   "product_features": [
     {
       "id": 1,
@@ -125,7 +81,7 @@
       "id": 62,
       "label": "PF-CE-1.2",
       "name": "CE: Driver out, supervised operations",
-      "swimlane": "CE Marking",
+      "swimlane": "CE",
       "platform": "Terberg-1.2",
       "odd": null,
       "environment": null,
@@ -138,13 +94,13 @@
       "trl6_date": "2026-07-01",
       "trl9_date": "2027-01-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:15"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 63,
       "label": "PF-CE-1.3",
       "name": "CE: Driver out, constrained steering limits",
-      "swimlane": "CE Marking",
+      "swimlane": "CE",
       "platform": "Terberg-1.2",
       "odd": null,
       "environment": null,
@@ -157,13 +113,13 @@
       "trl6_date": "2026-07-01",
       "trl9_date": "2027-01-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:15"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 64,
       "label": "PF-CE-1.4",
       "name": "CE: Baseline port ODD and environmental conditions",
-      "swimlane": "CE Marking",
+      "swimlane": "CE",
       "platform": "Terberg-1.3",
       "odd": "CFG-ODD-1.1",
       "environment": "CFG-ENV-1.1",
@@ -176,7 +132,7 @@
       "trl6_date": null,
       "trl9_date": null,
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:15"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 13,
@@ -467,7 +423,7 @@
       "id": 55,
       "label": "PF-CHE-1.2",
       "name": "Rendevous with a CHE at an a priori mapped location: Gantry or Crane",
-      "swimlane": "CHE Interactions",
+      "swimlane": "Charging",
       "platform": "Terberg-1",
       "odd": "CFG-ODD-1.1",
       "environment": "CFG-ENV-1.1",
@@ -480,13 +436,13 @@
       "trl6_date": null,
       "trl9_date": null,
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:15"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 56,
       "label": "PF-CHE-2.1",
       "name": "Rendevous with a CHE at an a relative to the CHE: STS crane",
-      "swimlane": "CHE Interactions",
+      "swimlane": "Charging",
       "platform": "Terberg-1",
       "odd": "CFG-ODD-1.1",
       "environment": "CFG-ENV-1.1",
@@ -499,13 +455,13 @@
       "trl6_date": null,
       "trl9_date": null,
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:15"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 57,
       "label": "PF-CHE-3.1",
       "name": "Rendevous task completion: baseline",
-      "swimlane": "CHE Interactions",
+      "swimlane": "Charging",
       "platform": "Terberg-1",
       "odd": "CFG-ODD-1.1",
       "environment": "CFG-ENV-1.1",
@@ -518,13 +474,13 @@
       "trl6_date": "2026-07-01",
       "trl9_date": "2026-10-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:15"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 58,
       "label": "PF-CHE-3.2",
       "name": "Rendevous task completion: xMS confirmation",
-      "swimlane": "CHE Interactions",
+      "swimlane": "Charging",
       "platform": "Terberg-1",
       "odd": "CFG-ODD-1.1",
       "environment": "CFG-ENV-1.1",
@@ -537,7 +493,7 @@
       "trl6_date": null,
       "trl9_date": null,
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:15"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 50,
@@ -828,7 +784,7 @@
       "id": 59,
       "label": "PF-HCH-1.1",
       "name": "Hitch a semi-trailer: controllable 5th wheel",
-      "swimlane": "Hitching/Unhitching",
+      "swimlane": "Hinching/ Unhitching",
       "platform": "Terberg-1",
       "odd": "CFG-ODD-1.1",
       "environment": "CFG-ENV-1.1",
@@ -841,7 +797,7 @@
       "trl6_date": "2026-04-01",
       "trl9_date": "2026-07-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:15"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 60,
@@ -866,7 +822,7 @@
       "id": 33,
       "label": "PF-HRI-1.1",
       "name": "Safe Operation: Limit motion towards nearby humans sharing operational space",
-      "swimlane": "Human-Robot Interaction",
+      "swimlane": "Human-Robot Interactions",
       "platform": "Terberg-1",
       "odd": "CFG-ODD-1.1",
       "environment": "CFG-ENV-1.1",
@@ -879,7 +835,7 @@
       "trl6_date": null,
       "trl9_date": null,
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:15"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 34,
@@ -1493,7 +1449,7 @@
       "id": 65,
       "label": "PF-XMS-1.1",
       "name": "API: Support XYZ MS at Jebel Ali",
-      "swimlane": "Fleet Management",
+      "swimlane": "Fleet management",
       "platform": "Terberg-1",
       "odd": null,
       "environment": null,
@@ -1506,7 +1462,7 @@
       "trl6_date": null,
       "trl9_date": null,
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:15"
+      "updated_at": "2025-11-19 13:55:50"
     }
   ],
   "capabilities": [
@@ -1788,7 +1744,7 @@
     },
     {
       "id": 98,
-      "swimlane": "CE Marking",
+      "swimlane": "CE",
       "sl": "CE",
       "maj": 1.0,
       "min": 1.0,
@@ -1807,11 +1763,11 @@
       "trl6_date": "2026-07-01",
       "trl9_date": "2027-01-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:24"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 99,
-      "swimlane": "CE Marking",
+      "swimlane": "CE",
       "sl": "CE",
       "maj": 1.0,
       "min": 2.0,
@@ -1830,11 +1786,11 @@
       "trl6_date": "2026-07-01",
       "trl9_date": "2027-01-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:24"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 100,
-      "swimlane": "CE Marking",
+      "swimlane": "CE",
       "sl": "CE",
       "maj": 1.0,
       "min": 3.0,
@@ -1853,11 +1809,11 @@
       "trl6_date": "2026-07-01",
       "trl9_date": "2027-01-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:24"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 101,
-      "swimlane": "CE Marking",
+      "swimlane": "CE",
       "sl": "CE",
       "maj": 1.0,
       "min": 4.0,
@@ -1876,11 +1832,11 @@
       "trl6_date": "2026-07-01",
       "trl9_date": "2027-01-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:24"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 102,
-      "swimlane": "CE Marking",
+      "swimlane": "CE",
       "sl": "CE",
       "maj": 1.0,
       "min": 5.0,
@@ -1899,11 +1855,11 @@
       "trl6_date": "2026-07-01",
       "trl9_date": "2027-01-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:24"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 103,
-      "swimlane": "CE Marking",
+      "swimlane": "CE",
       "sl": "CE",
       "maj": 2.0,
       "min": 1.0,
@@ -1922,11 +1878,11 @@
       "trl6_date": "2026-07-01",
       "trl9_date": "2027-01-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:24"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 104,
-      "swimlane": "CE Marking",
+      "swimlane": "CE",
       "sl": "CE",
       "maj": 2.0,
       "min": 2.0,
@@ -1945,11 +1901,11 @@
       "trl6_date": "2026-07-01",
       "trl9_date": "2027-01-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:24"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 105,
-      "swimlane": "CE Marking",
+      "swimlane": "CE",
       "sl": "CE",
       "maj": 2.0,
       "min": 3.0,
@@ -1968,11 +1924,11 @@
       "trl6_date": "2026-07-01",
       "trl9_date": "2027-01-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:24"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 106,
-      "swimlane": "CE Marking",
+      "swimlane": "CE",
       "sl": "CE",
       "maj": 2.0,
       "min": 4.0,
@@ -1991,11 +1947,11 @@
       "trl6_date": "2026-07-01",
       "trl9_date": "2027-01-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:24"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 107,
-      "swimlane": "CE Marking",
+      "swimlane": "CE",
       "sl": "CE",
       "maj": 3.0,
       "min": 1.0,
@@ -2014,11 +1970,11 @@
       "trl6_date": "2026-07-01",
       "trl9_date": "2027-01-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:24"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 108,
-      "swimlane": "CE Marking",
+      "swimlane": "CE",
       "sl": "CE",
       "maj": 3.0,
       "min": 2.0,
@@ -2037,11 +1993,11 @@
       "trl6_date": "2026-07-01",
       "trl9_date": "2027-01-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:24"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 109,
-      "swimlane": "CE Marking",
+      "swimlane": "CE",
       "sl": "CE",
       "maj": 3.0,
       "min": 3.0,
@@ -2060,11 +2016,11 @@
       "trl6_date": "2026-07-01",
       "trl9_date": "2027-01-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:24"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 110,
-      "swimlane": "CE Marking",
+      "swimlane": "CE",
       "sl": "CE",
       "maj": 3.0,
       "min": 4.0,
@@ -2083,11 +2039,11 @@
       "trl6_date": "2026-07-01",
       "trl9_date": "2027-01-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:24"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 111,
-      "swimlane": "CE Marking",
+      "swimlane": "CE",
       "sl": "CE",
       "maj": 4.0,
       "min": 1.0,
@@ -2106,7 +2062,7 @@
       "trl6_date": null,
       "trl9_date": null,
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:24"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 45,
@@ -2271,7 +2227,7 @@
     },
     {
       "id": 65,
-      "swimlane": "Forward Driving/Towing",
+      "swimlane": "Forward driving/ towing",
       "sl": "FWD",
       "maj": 1.0,
       "min": 1.0,
@@ -2290,11 +2246,11 @@
       "trl6_date": "2025-11-01",
       "trl9_date": "2025-11-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:24"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 66,
-      "swimlane": "Forward Driving/Towing",
+      "swimlane": "Forward Driving",
       "sl": "FWD",
       "maj": 1.0,
       "min": 2.0,
@@ -2313,11 +2269,11 @@
       "trl6_date": "2026-01-01",
       "trl9_date": "2026-04-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:24"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 67,
-      "swimlane": "Forward Driving/Towing",
+      "swimlane": "Forward Driving",
       "sl": "FWD",
       "maj": 1.0,
       "min": 3.0,
@@ -2336,11 +2292,11 @@
       "trl6_date": "2026-01-01",
       "trl9_date": "2026-04-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:24"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 68,
-      "swimlane": "Forward Driving/Towing",
+      "swimlane": "Forward Driving",
       "sl": "FWD",
       "maj": 1.0,
       "min": 4.0,
@@ -2359,11 +2315,11 @@
       "trl6_date": "2026-04-01",
       "trl9_date": "2026-07-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:24"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 69,
-      "swimlane": "Forward Driving/Towing",
+      "swimlane": "Forward Driving",
       "sl": "FWD",
       "maj": 2.0,
       "min": 1.0,
@@ -2382,11 +2338,11 @@
       "trl6_date": "2026-01-01",
       "trl9_date": "2026-04-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:24"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 70,
-      "swimlane": "Forward Driving/Towing",
+      "swimlane": "Forward Driving",
       "sl": "FWD",
       "maj": 2.0,
       "min": 2.0,
@@ -2405,11 +2361,11 @@
       "trl6_date": "2026-04-01",
       "trl9_date": "2026-07-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:24"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 71,
-      "swimlane": "Forward Driving/Towing",
+      "swimlane": "Forward Driving",
       "sl": "FWD",
       "maj": 3.0,
       "min": 1.0,
@@ -2428,11 +2384,11 @@
       "trl6_date": "2026-04-01",
       "trl9_date": "2026-07-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:24"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 72,
-      "swimlane": "Forward Driving/Towing",
+      "swimlane": "Forward Driving",
       "sl": "FWD",
       "maj": 3.0,
       "min": 2.0,
@@ -2451,11 +2407,11 @@
       "trl6_date": null,
       "trl9_date": null,
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:24"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 73,
-      "swimlane": "Forward Driving/Towing",
+      "swimlane": "Forward Driving",
       "sl": "FWD",
       "maj": 3.0,
       "min": 3.0,
@@ -2474,11 +2430,11 @@
       "trl6_date": null,
       "trl9_date": null,
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:24"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 74,
-      "swimlane": "Forward Driving/Towing",
+      "swimlane": "Forward Driving",
       "sl": "FWD",
       "maj": 4.0,
       "min": 1.0,
@@ -2497,11 +2453,11 @@
       "trl6_date": null,
       "trl9_date": null,
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:24"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 75,
-      "swimlane": "Forward Driving/Towing",
+      "swimlane": "Forward Driving",
       "sl": "FWD",
       "maj": 4.0,
       "min": 2.0,
@@ -2520,11 +2476,11 @@
       "trl6_date": null,
       "trl9_date": null,
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:24"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 76,
-      "swimlane": "Forward Driving/Towing",
+      "swimlane": "Forward Driving",
       "sl": "FWD",
       "maj": 4.0,
       "min": 3.0,
@@ -2543,11 +2499,11 @@
       "trl6_date": null,
       "trl9_date": null,
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:24"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 77,
-      "swimlane": "Forward Driving/Towing",
+      "swimlane": "Forward Driving",
       "sl": "FWD",
       "maj": 5.0,
       "min": 1.0,
@@ -2566,11 +2522,11 @@
       "trl6_date": "2026-04-01",
       "trl9_date": "2026-07-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:24"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 78,
-      "swimlane": "Forward Driving/Towing",
+      "swimlane": "Forward Driving",
       "sl": "FWD",
       "maj": 5.0,
       "min": 2.0,
@@ -2589,11 +2545,11 @@
       "trl6_date": "2026-04-01",
       "trl9_date": "2026-07-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:24"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 79,
-      "swimlane": "Forward Driving/Towing",
+      "swimlane": "Forward Driving",
       "sl": "FWD",
       "maj": 6.0,
       "min": 1.0,
@@ -2612,11 +2568,11 @@
       "trl6_date": "2026-07-01",
       "trl9_date": "2026-10-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:24"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 80,
-      "swimlane": "Forward Driving/Towing",
+      "swimlane": "Forward Driving",
       "sl": "FWD",
       "maj": 7.0,
       "min": 1.0,
@@ -2635,11 +2591,11 @@
       "trl6_date": "2026-07-01",
       "trl9_date": "2026-10-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:24"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 81,
-      "swimlane": "Forward Driving/Towing",
+      "swimlane": "Forward Driving",
       "sl": "FWD",
       "maj": 8.0,
       "min": 1.0,
@@ -2658,11 +2614,11 @@
       "trl6_date": "2026-10-01",
       "trl9_date": "2027-01-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:24"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 82,
-      "swimlane": "Forward Driving/Towing",
+      "swimlane": "Forward Driving",
       "sl": "FWD",
       "maj": 8.0,
       "min": 2.0,
@@ -2681,7 +2637,7 @@
       "trl6_date": "2026-10-01",
       "trl9_date": "2027-01-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:24"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 97,
@@ -2708,7 +2664,7 @@
     },
     {
       "id": 37,
-      "swimlane": "Infrastructure (Ghost Town)",
+      "swimlane": "Infrastructure (ghost town)",
       "sl": "INF",
       "maj": 1.0,
       "min": 1.0,
@@ -2727,11 +2683,11 @@
       "trl6_date": "2025-11-01",
       "trl9_date": "2026-01-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:24"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 38,
-      "swimlane": "Infrastructure (Ghost Town)",
+      "swimlane": "Infrastructure",
       "sl": "INF",
       "maj": 2.0,
       "min": 1.0,
@@ -2750,11 +2706,11 @@
       "trl6_date": "2025-11-01",
       "trl9_date": "2026-04-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:25"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 39,
-      "swimlane": "Infrastructure (Ghost Town)",
+      "swimlane": "Infrastructure",
       "sl": "INF",
       "maj": 2.0,
       "min": 2.0,
@@ -2773,11 +2729,11 @@
       "trl6_date": "2026-07-01",
       "trl9_date": "2026-10-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:25"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 40,
-      "swimlane": "Infrastructure (Ghost Town)",
+      "swimlane": "Infrastructure",
       "sl": "INF",
       "maj": 3.0,
       "min": 1.0,
@@ -2796,11 +2752,11 @@
       "trl6_date": "2026-04-01",
       "trl9_date": "2026-07-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:25"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 41,
-      "swimlane": "Infrastructure (Ghost Town)",
+      "swimlane": "Infrastructure",
       "sl": "INF",
       "maj": 4.0,
       "min": 1.0,
@@ -2819,11 +2775,11 @@
       "trl6_date": "2026-10-01",
       "trl9_date": "2027-01-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:25"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 42,
-      "swimlane": "Infrastructure (Ghost Town)",
+      "swimlane": "Infrastructure",
       "sl": "INF",
       "maj": 5.0,
       "min": 1.0,
@@ -2842,7 +2798,7 @@
       "trl6_date": null,
       "trl9_date": null,
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:25"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 27,
@@ -3030,7 +2986,7 @@
     },
     {
       "id": 1,
-      "swimlane": "Loops - Perception",
+      "swimlane": "Loops - perception",
       "sl": "LPP",
       "maj": 1.0,
       "min": 1.0,
@@ -3049,11 +3005,11 @@
       "trl6_date": "2025-11-01",
       "trl9_date": "2026-07-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:25"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 2,
-      "swimlane": "Loops - Perception",
+      "swimlane": "LPP",
       "sl": "LPP",
       "maj": 1.0,
       "min": 2.0,
@@ -3072,11 +3028,11 @@
       "trl6_date": null,
       "trl9_date": null,
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:25"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 3,
-      "swimlane": "Loops - Perception",
+      "swimlane": "LPP",
       "sl": "LPP",
       "maj": 2.0,
       "min": 1.0,
@@ -3095,11 +3051,11 @@
       "trl6_date": null,
       "trl9_date": null,
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:25"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 4,
-      "swimlane": "Loops - Perception",
+      "swimlane": "LPP",
       "sl": "LPP",
       "maj": 3.0,
       "min": 1.0,
@@ -3118,11 +3074,11 @@
       "trl6_date": null,
       "trl9_date": null,
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:25"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 5,
-      "swimlane": "Loops - Perception",
+      "swimlane": "LPP",
       "sl": "LPP",
       "maj": 4.0,
       "min": 1.0,
@@ -3141,11 +3097,11 @@
       "trl6_date": null,
       "trl9_date": null,
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:25"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 6,
-      "swimlane": "Loops - Reasoning",
+      "swimlane": "Loops - reasoning",
       "sl": "LPR",
       "maj": 1.0,
       "min": 1.0,
@@ -3164,11 +3120,11 @@
       "trl6_date": null,
       "trl9_date": null,
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:25"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 7,
-      "swimlane": "Loops - Reasoning",
+      "swimlane": "LPR",
       "sl": "LPR",
       "maj": 2.0,
       "min": 1.0,
@@ -3187,11 +3143,11 @@
       "trl6_date": null,
       "trl9_date": null,
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:25"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 8,
-      "swimlane": "Loops - Reasoning",
+      "swimlane": "LPR",
       "sl": "LPR",
       "maj": 3.0,
       "min": 1.0,
@@ -3210,11 +3166,11 @@
       "trl6_date": null,
       "trl9_date": null,
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:25"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 9,
-      "swimlane": "Loops - Reasoning",
+      "swimlane": "LPR",
       "sl": "LPR",
       "maj": 4.0,
       "min": 1.0,
@@ -3233,11 +3189,11 @@
       "trl6_date": null,
       "trl9_date": null,
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:25"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 10,
-      "swimlane": "Loops - Reasoning",
+      "swimlane": "LPR",
       "sl": "LPR",
       "maj": 5.0,
       "min": 1.0,
@@ -3256,11 +3212,11 @@
       "trl6_date": null,
       "trl9_date": null,
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:25"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 11,
-      "swimlane": "Loops - Reasoning",
+      "swimlane": "LPR",
       "sl": "LPR",
       "maj": 6.0,
       "min": 1.0,
@@ -3279,7 +3235,7 @@
       "trl6_date": null,
       "trl9_date": null,
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:25"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 35,
@@ -3352,7 +3308,7 @@
     },
     {
       "id": 93,
-      "swimlane": "Mission Execution",
+      "swimlane": "Mission/ Execution",
       "sl": "MSN",
       "maj": 1.0,
       "min": 1.0,
@@ -3371,11 +3327,11 @@
       "trl6_date": "2026-04-01",
       "trl9_date": "2026-07-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:25"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 94,
-      "swimlane": "Mission Execution",
+      "swimlane": "Mission",
       "sl": "MSN",
       "maj": 2.0,
       "min": 1.0,
@@ -3394,11 +3350,11 @@
       "trl6_date": "2026-04-01",
       "trl9_date": "2026-07-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:25"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 95,
-      "swimlane": "Mission Execution",
+      "swimlane": "Mission",
       "sl": "MSN",
       "maj": 3.0,
       "min": 1.0,
@@ -3417,11 +3373,11 @@
       "trl6_date": "2026-04-01",
       "trl9_date": "2026-07-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:25"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 96,
-      "swimlane": "Mission Execution",
+      "swimlane": "Mission",
       "sl": "MSN",
       "maj": 3.0,
       "min": 2.0,
@@ -3440,7 +3396,7 @@
       "trl6_date": "2026-04-01",
       "trl9_date": "2026-07-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:25"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 89,
@@ -3559,7 +3515,7 @@
     },
     {
       "id": 84,
-      "swimlane": "Reversing",
+      "swimlane": "Reverse Driving",
       "sl": "REV",
       "maj": 1.0,
       "min": 2.0,
@@ -3578,11 +3534,11 @@
       "trl6_date": "2026-04-01",
       "trl9_date": "2026-07-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:25"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 85,
-      "swimlane": "Reversing",
+      "swimlane": "Reverse Driving",
       "sl": "REV",
       "maj": 2.0,
       "min": 1.0,
@@ -3601,11 +3557,11 @@
       "trl6_date": "2026-04-01",
       "trl9_date": "2026-07-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:25"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 86,
-      "swimlane": "Reversing",
+      "swimlane": "Reverse Driving",
       "sl": "REV",
       "maj": 2.0,
       "min": 2.0,
@@ -3624,11 +3580,11 @@
       "trl6_date": "2026-04-01",
       "trl9_date": "2026-07-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:25"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 87,
-      "swimlane": "Reversing",
+      "swimlane": "Reverse Driving",
       "sl": "REV",
       "maj": 3.0,
       "min": 1.0,
@@ -3647,11 +3603,11 @@
       "trl6_date": "2026-07-01",
       "trl9_date": "2026-10-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:25"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 88,
-      "swimlane": "Reversing",
+      "swimlane": "Reverse Driving",
       "sl": "REV",
       "maj": 3.0,
       "min": 2.0,
@@ -3670,11 +3626,11 @@
       "trl6_date": "2026-07-01",
       "trl9_date": "2026-10-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:25"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 43,
-      "swimlane": "Static Objects",
+      "swimlane": "Static objects",
       "sl": "STA",
       "maj": 1.0,
       "min": 1.0,
@@ -3693,11 +3649,11 @@
       "trl6_date": "2025-11-01",
       "trl9_date": "2026-04-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:25"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 44,
-      "swimlane": "Static Objects",
+      "swimlane": "Static",
       "sl": "STA",
       "maj": 2.0,
       "min": 1.0,
@@ -3716,7 +3672,7 @@
       "trl6_date": "2026-07-01",
       "trl9_date": "2026-10-01",
       "created_at": "2025-11-19 13:55:50",
-      "updated_at": "2025-11-19 15:48:25"
+      "updated_at": "2025-11-19 13:55:50"
     },
     {
       "id": 53,
@@ -4298,225 +4254,6 @@
       "next": "Y",
       "created_at": "2025-11-19 13:55:50",
       "updated_at": "2025-11-19 13:55:50"
-    }
-  ],
-  "configurations": [
-    {
-      "id": 9,
-      "config_type": "Platform",
-      "code": "CA500-1",
-      "description": "CA500 (variant agnostic)",
-      "created_at": "2025-11-19 14:08:26",
-      "updated_at": "2025-11-19 14:08:26"
-    },
-    {
-      "id": 10,
-      "config_type": "Platform",
-      "code": "CA500-1.1",
-      "description": "CA500 + Oxa RAD + CE Mark",
-      "created_at": "2025-11-19 14:08:26",
-      "updated_at": "2025-11-19 14:08:26"
-    },
-    {
-      "id": 1,
-      "config_type": "Platform",
-      "code": "Generic",
-      "description": "Generic",
-      "created_at": "2025-11-19 14:08:26",
-      "updated_at": "2025-11-19 14:08:26"
-    },
-    {
-      "id": 7,
-      "config_type": "Platform",
-      "code": "T800-1",
-      "description": "T800 (variant agnostic)",
-      "created_at": "2025-11-19 14:08:26",
-      "updated_at": "2025-11-19 14:08:26"
-    },
-    {
-      "id": 8,
-      "config_type": "Platform",
-      "code": "T800-1.1",
-      "description": "T800 + Oxa RAD + CE Mark",
-      "created_at": "2025-11-19 14:08:26",
-      "updated_at": "2025-11-19 14:08:26"
-    },
-    {
-      "id": 2,
-      "config_type": "Platform",
-      "code": "Terberg-1",
-      "description": "Terberg (variant agnostic)",
-      "created_at": "2025-11-19 14:08:26",
-      "updated_at": "2025-11-19 14:08:26"
-    },
-    {
-      "id": 3,
-      "config_type": "Platform",
-      "code": "Terberg-1.1",
-      "description": "Terberg + Oxa RAD + CE Mark",
-      "created_at": "2025-11-19 14:08:26",
-      "updated_at": "2025-11-19 14:08:26"
-    },
-    {
-      "id": 4,
-      "config_type": "Platform",
-      "code": "Terberg-1.2",
-      "description": "Terberg-1.1 + Oxa Steering Rate Limiter (SRL) + CE Mark",
-      "created_at": "2025-11-19 14:08:26",
-      "updated_at": "2025-11-19 14:08:26"
-    },
-    {
-      "id": 5,
-      "config_type": "Platform",
-      "code": "Terberg-1.3",
-      "description": "Terberg-1.2 + baseline port + environmental conditions + CE Mark",
-      "created_at": "2025-11-19 14:08:26",
-      "updated_at": "2025-11-19 14:08:26"
-    },
-    {
-      "id": 6,
-      "config_type": "Platform",
-      "code": "Terberg-1.4",
-      "description": "Bryn: Terberg-1.3 + baseline port + interlocks with dock signals for safe reversing + CE Mark",
-      "created_at": "2025-11-19 14:08:26",
-      "updated_at": "2025-11-19 14:08:26"
-    },
-    {
-      "id": 11,
-      "config_type": "ODD",
-      "code": "CFG-ODD-1.1",
-      "description": "Port: baseline",
-      "created_at": "2025-11-19 14:08:26",
-      "updated_at": "2025-11-19 14:08:26"
-    },
-    {
-      "id": 12,
-      "config_type": "ODD",
-      "code": "CFG-ODD-1.2",
-      "description": "Port: Movable pinning stations",
-      "created_at": "2025-11-19 14:08:26",
-      "updated_at": "2025-11-19 14:08:26"
-    },
-    {
-      "id": 13,
-      "config_type": "ODD",
-      "code": "CFG-ODD-1.3",
-      "description": "Port: GPS degraded/ denied",
-      "created_at": "2025-11-19 14:08:26",
-      "updated_at": "2025-11-19 14:08:26"
-    },
-    {
-      "id": 14,
-      "config_type": "ODD",
-      "code": "CFG-ODD-2.1",
-      "description": "Factory: baseline",
-      "created_at": "2025-11-19 14:08:26",
-      "updated_at": "2025-11-19 14:08:26"
-    },
-    {
-      "id": 15,
-      "config_type": "Environment",
-      "code": "CFG-ENV-1.1",
-      "description": "Baseline: fair weather",
-      "created_at": "2025-11-19 14:08:26",
-      "updated_at": "2025-11-19 14:08:26"
-    },
-    {
-      "id": 16,
-      "config_type": "Environment",
-      "code": "CFG-ENV-2.1",
-      "description": "Sand: Moderate sandstorm",
-      "created_at": "2025-11-19 14:08:26",
-      "updated_at": "2025-11-19 14:08:26"
-    },
-    {
-      "id": 17,
-      "config_type": "Environment",
-      "code": "CFG-ENV-3.1",
-      "description": "Rain: Heavy",
-      "created_at": "2025-11-19 14:08:26",
-      "updated_at": "2025-11-19 14:08:26"
-    },
-    {
-      "id": 18,
-      "config_type": "Trailer",
-      "code": "CFG-CGO-1.1.1",
-      "description": "Semi-trailer: Boxcar; Vantec model; variable weight",
-      "created_at": "2025-11-19 14:08:26",
-      "updated_at": "2025-11-19 14:08:26"
-    },
-    {
-      "id": 19,
-      "config_type": "Trailer",
-      "code": "CFG-CGO-1.2.1",
-      "description": "Semi-trailer: Chassis; City Terminal model; chassis + container (variable weight)",
-      "created_at": "2025-11-19 14:08:26",
-      "updated_at": "2025-11-19 14:08:26"
-    },
-    {
-      "id": 20,
-      "config_type": "Trailer",
-      "code": "CFG-CGO-1.2.2",
-      "description": "Semi-trailer: Chassis; Jebel Ali model; chassis + container (variable weight)",
-      "created_at": "2025-11-19 14:08:26",
-      "updated_at": "2025-11-19 14:08:26"
-    },
-    {
-      "id": 21,
-      "config_type": "Trailer",
-      "code": "CFG-CGO-1.3.1",
-      "description": "Semi-trailer: Boat; Robotraz model; chassis + container (variable weight)",
-      "created_at": "2025-11-19 14:08:26",
-      "updated_at": "2025-11-19 14:08:26"
-    },
-    {
-      "id": 22,
-      "config_type": "Trailer",
-      "code": "CFG-CGO-2.1.1",
-      "description": "Drawbar trailer: XX model, single, variable weight",
-      "created_at": "2025-11-19 14:08:26",
-      "updated_at": "2025-11-19 14:08:26"
-    },
-    {
-      "id": 23,
-      "config_type": "Trailer",
-      "code": "CFG-CGO-2.1.2",
-      "description": "Drawbar trailer: XX model; train (up to 6 trailers); variable weight",
-      "created_at": "2025-11-19 14:08:26",
-      "updated_at": "2025-11-19 14:08:26"
-    },
-    {
-      "id": 24,
-      "config_type": "TRL",
-      "code": "TRL 3",
-      "description": "Able to run on a vehicle at Culham",
-      "created_at": "2025-11-19 18:24:51",
-      "updated_at": "2025-11-19 18:24:51"
-    },
-    {
-      "id": 25,
-      "config_type": "TRL",
-      "code": "TRL 6",
-      "description": "Demonstratable at a customer site with Oxa on site and in charge of operations",
-      "created_at": "2025-11-19 18:25:40",
-      "updated_at": "2025-11-19 18:25:40"
-    },
-    {
-      "id": 26,
-      "config_type": "TRL",
-      "code": "TRL 9",
-      "description": "Full Production - operations in customer's hands",
-      "created_at": "2025-11-19 18:26:04",
-      "updated_at": "2025-11-19 18:26:04"
-    }
-  ],
-  "milestones": [],
-  "pv_product_features_relationships": [
-    {
-      "product_variant_id": 1,
-      "product_variant_label": "PV-1",
-      "product_feature_id": 1,
-      "product_feature_label": "PF-ACT-1.1"
     }
   ],
   "pf_capabilities_relationships": [
