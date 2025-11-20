@@ -1161,8 +1161,35 @@ class ProductFeaturesApp:
     # Helper methods
     def get_config_codes(self, config_type):
         """Get configuration codes for a given type."""
+        # Handle swimlanes specially - they're not in configurations table
+        if config_type == 'Swimlane':
+            return self.get_swimlanes()
         configs = self.db.get_configurations(config_type)
         return [c['code'] for c in configs]
+    
+    def get_swimlanes(self):
+        """Get unique swimlanes from all entities."""
+        swimlanes = set()
+        
+        # Get from product features
+        pfs = self.db.get_product_features()
+        for pf in pfs:
+            if pf.get('swimlane'):
+                swimlanes.add(pf['swimlane'])
+        
+        # Get from capabilities
+        caps = self.db.get_capabilities()
+        for cap in caps:
+            if cap.get('swimlane'):
+                swimlanes.add(cap['swimlane'])
+        
+        # Get from technical functions
+        tfs = self.db.get_technical_functions()
+        for tf in tfs:
+            if tf.get('swimlane'):
+                swimlanes.add(tf['swimlane'])
+        
+        return sorted(list(swimlanes))
     
     def refresh_all_config_dropdowns(self):
         """Refresh all configuration-based dropdowns across all tabs."""
