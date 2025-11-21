@@ -49,16 +49,21 @@ class SheetsExporter:
                 'count': len(self.data.get('product_variants', []))
             },
             '2': {
+                'name': 'Configurations',
+                'key': 'configurations',
+                'count': len(self.data.get('configurations', []))
+            },
+            '3': {
                 'name': 'Product Features',
                 'key': 'product_features',
                 'count': len(self.data.get('product_features', []))
             },
-            '3': {
+            '4': {
                 'name': 'Capabilities',
                 'key': 'capabilities',
                 'count': len(self.data.get('capabilities', []))
             },
-            '4': {
+            '5': {
                 'name': 'Technical Functions',
                 'key': 'technical_functions',
                 'count': len(self.data.get('technical_functions', []))
@@ -69,7 +74,7 @@ class SheetsExporter:
         for key, comp in components.items():
             print(f"  [{key}] {comp['name']} ({comp['count']} items)")
         
-        print(f"\n  [5] ALL components")
+        print(f"\n  [6] ALL components")
         print(f"  [0] Cancel/Exit")
         
         while True:
@@ -79,8 +84,8 @@ class SheetsExporter:
             if selection == '0':
                 return False
             
-            if selection == '5':
-                self.selected_components = {'product_variants', 'product_features', 'capabilities', 'technical_functions'}
+            if selection == '6':
+                self.selected_components = {'product_variants', 'configurations', 'product_features', 'capabilities', 'technical_functions'}
                 break
             
             try:
@@ -163,7 +168,32 @@ class SheetsExporter:
                     ws.column_dimensions[get_column_letter(col_idx)].width = min(max(len(str(header)) + 2, 12), 50)
                 
                 print(f"  ✓ Exported {len(pv_data)} Product Variants")
-        
+
+        # Export Configurations
+        if 'configurations' in self.selected_components:
+            pf_data = self.data.get('configurations', [])
+            if pf_data:
+                ws = wb.create_sheet("Configurations")
+                headers = list(pf_data[0].keys())
+                
+                # Write headers
+                for col_idx, header in enumerate(headers, 1):
+                    cell = ws.cell(row=1, column=col_idx, value=header)
+                    cell.font = header_font
+                    cell.fill = header_fill
+                    cell.alignment = header_alignment
+                
+                # Write data
+                for row_idx, item in enumerate(pf_data, 2):
+                    for col_idx, header in enumerate(headers, 1):
+                        ws.cell(row=row_idx, column=col_idx, value=item.get(header))
+                
+                # Auto-adjust column widths
+                for col_idx, header in enumerate(headers, 1):
+                    ws.column_dimensions[get_column_letter(col_idx)].width = min(max(len(str(header)) + 2, 12), 50)
+                
+                print(f"  ✓ Exported {len(pf_data)} Configurations")
+
         # Export Product Features
         if 'product_features' in self.selected_components:
             pf_data = self.data.get('product_features', [])
@@ -336,7 +366,19 @@ class SheetsExporter:
                     writer.writerows(pv_data)
                 files_created.append(csv_file)
                 print(f"  ✓ Exported {len(pv_data)} Product Variants to {csv_file.name}")
-        
+
+        # Export Configurations
+        if 'product_features' in self.selected_components:
+            pf_data = self.data.get('configurations', [])
+            if pf_data:
+                csv_file = output_path / "configurations.csv"
+                with open(csv_file, 'w', newline='', encoding='utf-8') as f:
+                    writer = csv.DictWriter(f, fieldnames=pf_data[0].keys())
+                    writer.writeheader()
+                    writer.writerows(pf_data)
+                files_created.append(csv_file)
+                print(f"  ✓ Exported {len(pf_data)} Configurations to {csv_file.name}")
+
         # Export Product Features
         if 'product_features' in self.selected_components:
             pf_data = self.data.get('product_features', [])
