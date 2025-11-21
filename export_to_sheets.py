@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-Export product_features_roadmap_db.json to Google Sheets compatible format (CSV/Excel).
+Export engineering_plan_db.json to Google Sheets compatible format (CSV/Excel).
 Allows user to select which components to export while maintaining all linking relationships.
+Includes support for owner and url fields.
 """
 
 import json
@@ -43,16 +44,21 @@ class SheetsExporter:
         
         components = {
             '1': {
+                'name': 'Product Variants',
+                'key': 'product_variants',
+                'count': len(self.data.get('product_variants', []))
+            },
+            '2': {
                 'name': 'Product Features',
                 'key': 'product_features',
                 'count': len(self.data.get('product_features', []))
             },
-            '2': {
+            '3': {
                 'name': 'Capabilities',
                 'key': 'capabilities',
                 'count': len(self.data.get('capabilities', []))
             },
-            '3': {
+            '4': {
                 'name': 'Technical Functions',
                 'key': 'technical_functions',
                 'count': len(self.data.get('technical_functions', []))
@@ -63,7 +69,7 @@ class SheetsExporter:
         for key, comp in components.items():
             print(f"  [{key}] {comp['name']} ({comp['count']} items)")
         
-        print(f"\n  [4] ALL components")
+        print(f"\n  [5] ALL components")
         print(f"  [0] Cancel/Exit")
         
         while True:
@@ -73,8 +79,8 @@ class SheetsExporter:
             if selection == '0':
                 return False
             
-            if selection == '4':
-                self.selected_components = {'product_features', 'capabilities', 'technical_functions'}
+            if selection == '5':
+                self.selected_components = {'product_variants', 'product_features', 'capabilities', 'technical_functions'}
                 break
             
             try:
@@ -102,6 +108,11 @@ class SheetsExporter:
         """Get only the relationships relevant to selected components."""
         relationships = {}
         
+        # Product Variants <-> Product Features
+        if 'product_variants' in self.selected_components and 'product_features' in self.selected_components:
+            relationships['pv_product_features'] = self.data.get('pv_product_features_relationships', [])
+            print(f"  ✓ Including Product Variant <-> Product Feature links ({len(relationships['pv_product_features'])} relationships)")
+        
         # Product Features <-> Capabilities
         if 'product_features' in self.selected_components and 'capabilities' in self.selected_components:
             relationships['pf_capabilities'] = self.data.get('pf_capabilities_relationships', [])
@@ -127,6 +138,31 @@ class SheetsExporter:
         header_font = Font(bold=True, color="FFFFFF")
         header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
         header_alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+        
+        # Export Product Variants
+        if 'product_variants' in self.selected_components:
+            pv_data = self.data.get('product_variants', [])
+            if pv_data:
+                ws = wb.create_sheet("Product Variants")
+                headers = list(pv_data[0].keys())
+                
+                # Write headers
+                for col_idx, header in enumerate(headers, 1):
+                    cell = ws.cell(row=1, column=col_idx, value=header)
+                    cell.font = header_font
+                    cell.fill = header_fill
+                    cell.alignment = header_alignment
+                
+                # Write data
+                for row_idx, item in enumerate(pv_data, 2):
+                    for col_idx, header in enumerate(headers, 1):
+                        ws.cell(row=row_idx, column=col_idx, value=item.get(header))
+                
+                # Auto-adjust column widths
+                for col_idx, header in enumerate(headers, 1):
+                    ws.column_dimensions[get_column_letter(col_idx)].width = min(max(len(str(header)) + 2, 12), 50)
+                
+                print(f"  ✓ Exported {len(pv_data)} Product Variants")
         
         # Export Product Features
         if 'product_features' in self.selected_components:
@@ -265,6 +301,9 @@ class SheetsExporter:
         ws['B5'] = self.json_file
         ws['A6'] = "Selected Components:"
         ws['B6'] = ", ".join(sorted(self.selected_components))
+        ws['B5'] = self.json_file
+        ws['A6'] = "Selected Components:"
+        ws['B6'] = ", ".join(sorted(self.selected_components))
         
         ws.column_dimensions['A'].width = 25
         ws.column_dimensions['B'].width = 40
@@ -285,6 +324,18 @@ class SheetsExporter:
         output_path.mkdir(exist_ok=True)
         
         files_created = []
+        
+        # Export Product Variants
+        if 'product_variants' in self.selected_components:
+            pv_data = self.data.get('product_variants', [])
+            if pv_data:
+                csv_file = output_path / "product_variants.csv"
+                with open(csv_file, 'w', newline='', encoding='utf-8') as f:
+                    writer = csv.DictWriter(f, fieldnames=pv_data[0].keys())
+                    writer.writeheader()
+                    writer.writerows(pv_data)
+                files_created.append(csv_file)
+                print(f"  ✓ Exported {len(pv_data)} Product Variants to {csv_file.name}")
         
         # Export Product Features
         if 'product_features' in self.selected_components:
@@ -352,7 +403,7 @@ class SheetsExporter:
     def run(self):
         """Main execution flow."""
         print("\n" + "="*60)
-        print("PRODUCT FEATURES ROADMAP - Google Sheets Exporter")
+        print("ENGINEERING PLAN - Google Sheets Exporter")
         print("="*60)
         
         # Load data
@@ -410,7 +461,7 @@ class SheetsExporter:
 
 def main():
     """Main entry point."""
-    json_file = "product_features_roadmap_db.json"
+    json_file = "engineering_plan_db.json"
     
     # Check if file exists
     if not Path(json_file).exists():
