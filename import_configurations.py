@@ -18,7 +18,7 @@ type_mapping = {
     'Platform': 'Platform',
     'Operational Environment': 'ODD',
     'Environmental conditions': 'Environment',
-    'Cargo': 'Trailer'
+    'Cargo': 'Cargo'
 }
 
 added_count = 0

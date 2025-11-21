@@ -274,7 +274,7 @@ def import_data():
         'Platform': 'Platform',
         'Operational Environment': 'ODD',
         'Environmental conditions': 'Environment',
-        'Cargo': 'Trailer'
+        'Cargo': 'Cargo'
     }
     
     current_type = None

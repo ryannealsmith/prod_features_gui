@@ -60,7 +60,7 @@ def main():
             export_data['technical_functions'].append(tf)
         
         # Export Configurations
-        for config_type in ['Platform', 'ODD', 'Environment', 'Trailer', 'TRL']:
+        for config_type in ['Platform', 'ODD', 'Environment', 'Cargo', 'TRL']:
             configs = db.get_configurations(config_type)
             for config in configs:
                 export_data['configurations'].append(config)

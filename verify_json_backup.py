@@ -56,7 +56,7 @@ for section, (method, name) in export_sections.items():
 
 # Configurations (exported by type)
 total_configs = 0
-for config_type in ['Platform', 'ODD', 'Environment', 'Trailer', 'TRL']:
+for config_type in ['Platform', 'ODD', 'Environment', 'Cargo', 'TRL']:
     configs = db.get_configurations(config_type)
     total_configs += len(configs)
 print(f"  {'Configurations':40} {total_configs:5} records ✓")

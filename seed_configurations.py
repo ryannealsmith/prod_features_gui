@@ -22,11 +22,11 @@ initial_configs = [
     {'config_type': 'Environment', 'code': 'CFG-ENV-2.2', 'description': 'Outdoor yard - Extended area'},
     {'config_type': 'Environment', 'code': 'CFG-ENV-3.1', 'description': 'Mixed indoor/outdoor - Basic integration'},
     
-    # Trailers
-    {'config_type': 'Trailer', 'code': 'Standard-20ft', 'description': '20-foot standard trailer configuration'},
-    {'config_type': 'Trailer', 'code': 'Standard-40ft', 'description': '40-foot standard trailer configuration'},
-    {'config_type': 'Trailer', 'code': 'Flatbed', 'description': 'Flatbed trailer for specialized cargo'},
-    {'config_type': 'Trailer', 'code': 'Refrigerated', 'description': 'Temperature-controlled trailer unit'},
+    # Cargo
+    {'config_type': 'Cargo', 'code': 'Standard-20ft', 'description': '20-foot standard container configuration'},
+    {'config_type': 'Cargo', 'code': 'Standard-40ft', 'description': '40-foot standard container configuration'},
+    {'config_type': 'Cargo', 'code': 'Flatbed', 'description': 'Flatbed trailer for specialized cargo'},
+    {'config_type': 'Cargo', 'code': 'Refrigerated', 'description': 'Temperature-controlled cargo unit'},
     
     # TRLs
     {'config_type': 'TRL', 'code': 'TRL 3', 'description': 'Proof of Concept - Experimental proof of concept validated'},

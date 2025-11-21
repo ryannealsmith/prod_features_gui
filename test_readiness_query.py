@@ -10,7 +10,7 @@ print("Enter your filter values (press Enter to skip):")
 platform = input("Platform (e.g., Terberg-1): ").strip() or None
 odd = input("ODD (e.g., CFG-ODD-1): ").strip() or None
 environment = input("Environment (e.g., CFG-ENV-2.1): ").strip() or None
-trailer = input("Trailer: ").strip() or None
+trailer = input("Cargo: ").strip() or None
 date_str = input("Query Date (YYYY-MM-DD): ").strip() or None
 
 query_date = None
@@ -42,7 +42,7 @@ if pfs:
     print("\nFirst 5 product features:")
     for i, pf in enumerate(pfs[:5]):
         print(f"{i+1}. {pf['label']}: {pf['name']}")
-        print(f"   Platform: {pf.get('platform')}, ODD: {pf.get('odd')}, Env: {pf.get('environment')}, Trailer: {pf.get('trailer')}")
+        print(f"   Platform: {pf.get('platform')}, ODD: {pf.get('odd')}, Env: {pf.get('environment')}, Cargo: {pf.get('trailer')}")
         print(f"   Details: {pf.get('details', '')[:80]}")
         
         # Calculate TRL achieved
@@ -67,6 +67,6 @@ else:
     print(f"Platforms: {db.get_unique_values('product_features', 'platform')}")
     print(f"ODDs: {db.get_unique_values('product_features', 'odd')}")
     print(f"Environments: {db.get_unique_values('product_features', 'environment')}")
-    print(f"Trailers: {db.get_unique_values('product_features', 'trailer')}")
+    print(f"Cargo: {db.get_unique_values('product_features', 'trailer')}")
 
 db.close()

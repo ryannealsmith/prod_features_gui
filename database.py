@@ -43,6 +43,8 @@ class Database:
                 trl3_date DATE,
                 trl6_date DATE,
                 trl9_date DATE,
+                owner TEXT,
+                url TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
@@ -70,6 +72,8 @@ class Database:
                 trl3_date DATE,
                 trl6_date DATE,
                 trl9_date DATE,
+                owner TEXT,
+                url TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
@@ -91,6 +95,8 @@ class Database:
                 trailer TEXT,
                 details TEXT,
                 next TEXT,
+                owner TEXT,
+                url TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
@@ -158,6 +164,8 @@ class Database:
                 trailer TEXT,
                 trl TEXT,
                 due_date DATE NOT NULL,
+                owner TEXT,
+                url TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
@@ -197,14 +205,14 @@ class Database:
         cursor.execute('''
             INSERT INTO product_features 
             (label, name, swimlane, platform, odd, environment, trailer, details, comments, 
-             when_date, start_date, trl3_date, trl6_date, trl9_date)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             when_date, start_date, trl3_date, trl6_date, trl9_date, owner, url)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             data.get('label'), data.get('name'), data.get('swimlane'),
             data.get('platform'), data.get('odd'), data.get('environment'), 
             data.get('trailer'), data.get('details'), data.get('comments'), 
             data.get('when_date'), data.get('start_date'), data.get('trl3_date'), 
-            data.get('trl6_date'), data.get('trl9_date')
+            data.get('trl6_date'), data.get('trl9_date'), data.get('owner'), data.get('url')
         ))
         self.connection.commit()
         return cursor.lastrowid
@@ -295,14 +303,14 @@ class Database:
             UPDATE product_features 
             SET label=?, name=?, swimlane=?, platform=?, odd=?, environment=?, trailer=?,
                 details=?, comments=?, when_date=?, start_date=?, trl3_date=?,
-                trl6_date=?, trl9_date=?, updated_at=CURRENT_TIMESTAMP
+                trl6_date=?, trl9_date=?, owner=?, url=?, updated_at=CURRENT_TIMESTAMP
             WHERE id = ?
         ''', (
             data.get('label'), data.get('name'), data.get('swimlane'),
             data.get('platform'), data.get('odd'), data.get('environment'), 
             data.get('trailer'), data.get('details'), data.get('comments'), 
             data.get('when_date'), data.get('start_date'), data.get('trl3_date'), 
-            data.get('trl6_date'), data.get('trl9_date'), pf_id
+            data.get('trl6_date'), data.get('trl9_date'), data.get('owner'), data.get('url'), pf_id
         ))
         self.connection.commit()
         
@@ -320,15 +328,15 @@ class Database:
             INSERT INTO capabilities 
             (swimlane, sl, maj, min, label, name, platform, odd, environment, 
              trailer, details, when_date, dependencies, dependents, start_date, 
-             trl3_date, trl6_date, trl9_date)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             trl3_date, trl6_date, trl9_date, owner, url)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             data.get('swimlane'), data.get('sl'), data.get('maj'), data.get('min'),
             data.get('label'), data.get('name'), data.get('platform'),
             data.get('odd'), data.get('environment'), data.get('trailer'),
             data.get('details'), data.get('when_date'), data.get('dependencies'),
             data.get('dependents'), data.get('start_date'), data.get('trl3_date'),
-            data.get('trl6_date'), data.get('trl9_date')
+            data.get('trl6_date'), data.get('trl9_date'), data.get('owner'), data.get('url')
         ))
         self.connection.commit()
         return cursor.lastrowid
@@ -421,10 +429,10 @@ class Database:
         cursor = self.connection.cursor()
         cursor.execute('''
             UPDATE capabilities 
-            SET swimlane=?, sl=?, maj=?, min=?, label=?, name=?, platform=?, 
+            SET swimlane=?, sl=?, maj=?, min=?, label=?, name=?, platform=?,
                 odd=?, environment=?, trailer=?, details=?, when_date=?,
                 dependencies=?, dependents=?, start_date=?, trl3_date=?,
-                trl6_date=?, trl9_date=?, updated_at=CURRENT_TIMESTAMP
+                trl6_date=?, trl9_date=?, owner=?, url=?, updated_at=CURRENT_TIMESTAMP
             WHERE id = ?
         ''', (
             data.get('swimlane'), data.get('sl'), data.get('maj'), data.get('min'),
@@ -432,7 +440,7 @@ class Database:
             data.get('odd'), data.get('environment'), data.get('trailer'),
             data.get('details'), data.get('when_date'), data.get('dependencies'),
             data.get('dependents'), data.get('start_date'), data.get('trl3_date'),
-            data.get('trl6_date'), data.get('trl9_date'), cap_id
+            data.get('trl6_date'), data.get('trl9_date'), data.get('owner'), data.get('url'), cap_id
         ))
         self.connection.commit()
         
@@ -449,13 +457,13 @@ class Database:
         cursor.execute('''
             INSERT INTO technical_functions 
             (swimlane, sl, maj, min, label, name, platform, odd, environment, 
-             trailer, details, next)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             trailer, details, next, owner, url)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             data.get('swimlane'), data.get('sl'), data.get('maj'), data.get('min'),
             data.get('label'), data.get('name'), data.get('platform'),
             data.get('odd'), data.get('environment'), data.get('trailer'),
-            data.get('details'), data.get('next')
+            data.get('details'), data.get('next'), data.get('owner'), data.get('url')
         ))
         self.connection.commit()
         return cursor.lastrowid
@@ -499,13 +507,13 @@ class Database:
             UPDATE technical_functions 
             SET swimlane=?, sl=?, maj=?, min=?, label=?, name=?, platform=?,
                 odd=?, environment=?, trailer=?, details=?, next=?,
-                updated_at=CURRENT_TIMESTAMP
+                owner=?, url=?, updated_at=CURRENT_TIMESTAMP
             WHERE id = ?
         ''', (
             data.get('swimlane'), data.get('sl'), data.get('maj'), data.get('min'),
             data.get('label'), data.get('name'), data.get('platform'),
             data.get('odd'), data.get('environment'), data.get('trailer'),
-            data.get('details'), data.get('next'), tf_id
+            data.get('details'), data.get('next'), data.get('owner'), data.get('url'), tf_id
         ))
         self.connection.commit()
         
@@ -697,8 +705,8 @@ class Database:
         cursor = self.connection.cursor()
         cursor.execute('''
             INSERT INTO product_variants 
-            (label, title, description, platform, odd, environment, trailer, trl, due_date)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (label, title, description, platform, odd, environment, trailer, trl, due_date, owner, url)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             data.get('label'),
             data.get('title'),
@@ -708,7 +716,9 @@ class Database:
             data.get('environment'),
             data.get('trailer'),
             data.get('trl'),
-            data.get('due_date')
+            data.get('due_date'),
+            data.get('owner'),
+            data.get('url')
         ))
         self.connection.commit()
         return cursor.lastrowid
@@ -761,7 +771,7 @@ class Database:
             UPDATE product_variants 
             SET label = ?, title = ?, description = ?, platform = ?, odd = ?, 
                 environment = ?, trailer = ?, trl = ?, due_date = ?,
-                updated_at = CURRENT_TIMESTAMP
+                owner = ?, url = ?, updated_at = CURRENT_TIMESTAMP
             WHERE id = ?
         ''', (
             data.get('label'),
@@ -773,6 +783,8 @@ class Database:
             data.get('trailer'),
             data.get('trl'),
             data.get('due_date'),
+            data.get('owner'),
+            data.get('url'),
             pv_id
         ))
         self.connection.commit()
@@ -814,3 +826,26 @@ class Database:
             ORDER BY pf.label
         ''', (pv_id,))
         return [dict(row) for row in cursor.fetchall()]
+
+    def get_pf_product_variants(self, pf_id: int) -> List[Dict]:
+        """Get all product variants linked to a product feature."""
+        cursor = self.connection.cursor()
+        cursor.execute('''
+            SELECT pv.* FROM product_variants pv
+            JOIN pv_product_features pvpf ON pv.id = pvpf.product_variant_id
+            WHERE pvpf.product_feature_id = ?
+            ORDER BY pv.label
+        ''', (pf_id,))
+        return [dict(row) for row in cursor.fetchall()]
+    
+    def get_unique_owners(self) -> List[str]:
+        """Get all unique owner values from all entity tables."""
+        cursor = self.connection.cursor()
+        owners = set()
+        
+        # Get owners from all entity tables
+        for table in ['product_variants', 'product_features', 'capabilities', 'technical_functions']:
+            cursor.execute(f'SELECT DISTINCT owner FROM {table} WHERE owner IS NOT NULL AND owner != ""')
+            owners.update(row[0] for row in cursor.fetchall())
+        
+        return sorted(list(owners))

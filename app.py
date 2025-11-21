@@ -45,10 +45,10 @@ class ProductFeaturesApp:
         
         # Create tabs
         self.create_product_variants_tab()
+        self.create_configurations_tab()
         self.create_product_features_tab()
         self.create_capabilities_tab()
         self.create_technical_functions_tab()
-        self.create_configurations_tab()
         self.create_readiness_matrix_tab()
         self.create_roadmap_tab()
         self.create_interactive_roadmap_tab()
@@ -75,7 +75,7 @@ class ProductFeaturesApp:
         scroll.pack(side=tk.RIGHT, fill=tk.Y)
         
         self.pv_tree = ttk.Treeview(list_frame, 
-                                     columns=('Label', 'Title', 'Platform', 'ODD', 'Environment', 'Trailer', 'TRL', 'Target Date'),
+                                     columns=('Label', 'Title', 'Platform', 'ODD', 'Environment', 'Cargo', 'TRL', 'Target Date'),
                                      show='tree headings',
                                      yscrollcommand=scroll.set)
         scroll.config(command=self.pv_tree.yview)
@@ -85,7 +85,7 @@ class ProductFeaturesApp:
         self.pv_tree.heading('Platform', text='Platform')
         self.pv_tree.heading('ODD', text='ODD')
         self.pv_tree.heading('Environment', text='Environment')
-        self.pv_tree.heading('Trailer', text='Trailer')
+        self.pv_tree.heading('Cargo', text='Cargo')
         self.pv_tree.heading('TRL', text='TRL')
         self.pv_tree.heading('Target Date', text='Target Date')
         
@@ -95,7 +95,7 @@ class ProductFeaturesApp:
         self.pv_tree.column('Platform', width=100)
         self.pv_tree.column('ODD', width=100)
         self.pv_tree.column('Environment', width=100)
-        self.pv_tree.column('Trailer', width=100)
+        self.pv_tree.column('Cargo', width=100)
         self.pv_tree.column('TRL', width=60)
         self.pv_tree.column('Target Date', width=90)
         
@@ -166,15 +166,26 @@ class ProductFeaturesApp:
         self.pv_form['environment'].grid(row=row, column=1, sticky=tk.EW, pady=3)
         row += 1
         
-        ttk.Label(detail_frame, text="Trailer:").grid(row=row, column=0, sticky=tk.W, pady=3)
+        ttk.Label(detail_frame, text="Cargo:").grid(row=row, column=0, sticky=tk.W, pady=3)
         self.pv_form['trailer'] = ttk.Combobox(detail_frame, width=47)
-        self.pv_form['trailer']['values'] = [''] + self.get_config_codes('Trailer')
+        self.pv_form['trailer']['values'] = [''] + self.get_config_codes('Cargo')
         self.pv_form['trailer'].grid(row=row, column=1, sticky=tk.EW, pady=3)
         row += 1
         
         ttk.Label(detail_frame, text="TRL:").grid(row=row, column=0, sticky=tk.W, pady=3)
         self.pv_form['trl'] = ttk.Combobox(detail_frame, width=47, values=['', 'TRL3', 'TRL6', 'TRL9'])
         self.pv_form['trl'].grid(row=row, column=1, sticky=tk.EW, pady=3)
+        row += 1
+        
+        ttk.Label(detail_frame, text="Owner:").grid(row=row, column=0, sticky=tk.W, pady=3)
+        self.pv_form['owner'] = ttk.Combobox(detail_frame, width=47)
+        self.pv_form['owner']['values'] = [''] + self.db.get_unique_owners()
+        self.pv_form['owner'].grid(row=row, column=1, sticky=tk.EW, pady=3)
+        row += 1
+        
+        ttk.Label(detail_frame, text="URL:").grid(row=row, column=0, sticky=tk.W, pady=3)
+        self.pv_form['url'] = ttk.Entry(detail_frame, width=50)
+        self.pv_form['url'].grid(row=row, column=1, sticky=tk.EW, pady=3)
         row += 1
         
         # Description
@@ -323,7 +334,7 @@ class ProductFeaturesApp:
             ('platform', 'Platform:', 'Platform'),
             ('odd', 'ODD:', 'ODD'),
             ('environment', 'Environment:', 'Environment'),
-            ('trailer', 'Trailer:', 'Trailer')
+            ('trailer', 'Cargo:', 'Cargo')
         ]
         
         for field_name, label_text, config_type in combo_fields:
@@ -333,6 +344,31 @@ class ProductFeaturesApp:
             combo.grid(row=row, column=1, sticky=tk.EW, pady=3)
             self.pf_form[field_name] = combo
             row += 1
+        
+        # Owner and URL fields
+        ttk.Label(detail_frame, text="Owner:").grid(row=row, column=0, sticky=tk.W, pady=3)
+        self.pf_form['owner'] = ttk.Combobox(detail_frame, width=27)
+        self.pf_form['owner']['values'] = [''] + self.db.get_unique_owners()
+        self.pf_form['owner'].grid(row=row, column=1, sticky=tk.EW, pady=3)
+        row += 1
+        
+        ttk.Label(detail_frame, text="URL:").grid(row=row, column=0, sticky=tk.W, pady=3)
+        self.pf_form['url'] = ttk.Entry(detail_frame, width=30)
+        self.pf_form['url'].grid(row=row, column=1, sticky=tk.EW, pady=3)
+        row += 1
+
+        # Product Variant association multi-select listbox (only once)
+        ttk.Label(detail_frame, text="Associated Product Variants:").grid(row=row, column=0, sticky=tk.NW, pady=3)
+        pv_frame = ttk.Frame(detail_frame)
+        pv_frame.grid(row=row, column=1, sticky=tk.EW, pady=3)
+        pv_scroll = ttk.Scrollbar(pv_frame)
+        pv_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        self.pf_form['product_variants'] = tk.Listbox(pv_frame, height=6, selectmode=tk.MULTIPLE, yscrollcommand=pv_scroll.set)
+        for pv in self.db.get_product_variants():
+            self.pf_form['product_variants'].insert(tk.END, pv['label'])
+        self.pf_form['product_variants'].pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        pv_scroll.config(command=self.pf_form['product_variants'].yview)
+        row += 1
         
         # Text fields
         ttk.Label(detail_frame, text="Details:").grid(row=row, column=0, sticky=tk.NW, pady=3)
@@ -475,6 +511,18 @@ class ProductFeaturesApp:
             combo.grid(row=row, column=1, sticky=tk.EW, pady=3)
             self.cap_form[field_name] = combo
             row += 1
+        
+        # Owner and URL fields
+        ttk.Label(detail_frame, text="Owner:").grid(row=row, column=0, sticky=tk.W, pady=3)
+        self.cap_form['owner'] = ttk.Combobox(detail_frame, width=27)
+        self.cap_form['owner']['values'] = [''] + self.db.get_unique_owners()
+        self.cap_form['owner'].grid(row=row, column=1, sticky=tk.EW, pady=3)
+        row += 1
+        
+        ttk.Label(detail_frame, text="URL:").grid(row=row, column=0, sticky=tk.W, pady=3)
+        self.cap_form['url'] = ttk.Entry(detail_frame, width=30)
+        self.cap_form['url'].grid(row=row, column=1, sticky=tk.EW, pady=3)
+        row += 1
         
         ttk.Label(detail_frame, text="Details:").grid(row=row, column=0, sticky=tk.NW, pady=3)
         self.cap_form['details'] = scrolledtext.ScrolledText(detail_frame, height=4, width=50)
@@ -619,6 +667,18 @@ class ProductFeaturesApp:
             self.tf_form[field_name] = combo
             row += 1
         
+        # Owner and URL fields
+        ttk.Label(detail_frame, text="Owner:").grid(row=row, column=0, sticky=tk.W, pady=3)
+        self.tf_form['owner'] = ttk.Combobox(detail_frame, width=27)
+        self.tf_form['owner']['values'] = [''] + self.db.get_unique_owners()
+        self.tf_form['owner'].grid(row=row, column=1, sticky=tk.EW, pady=3)
+        row += 1
+        
+        ttk.Label(detail_frame, text="URL:").grid(row=row, column=0, sticky=tk.W, pady=3)
+        self.tf_form['url'] = ttk.Entry(detail_frame, width=30)
+        self.tf_form['url'].grid(row=row, column=1, sticky=tk.EW, pady=3)
+        row += 1
+        
         ttk.Label(detail_frame, text="Details:").grid(row=row, column=0, sticky=tk.NW, pady=3)
         self.tf_form['details'] = scrolledtext.ScrolledText(detail_frame, height=4, width=50)
         self.tf_form['details'].grid(row=row, column=1, sticky=tk.EW, pady=3)
@@ -681,7 +741,7 @@ class ProductFeaturesApp:
         self.rm_environment = ttk.Combobox(filter_frame, state='readonly', width=25)
         self.rm_environment.grid(row=row, column=1, sticky=tk.W, padx=5, pady=3)
         
-        ttk.Label(filter_frame, text="Trailer:").grid(row=row, column=2, sticky=tk.W, padx=5, pady=3)
+        ttk.Label(filter_frame, text="Cargo:").grid(row=row, column=2, sticky=tk.W, padx=5, pady=3)
         self.rm_trailer = ttk.Combobox(filter_frame, state='readonly', width=25)
         self.rm_trailer.grid(row=row, column=3, sticky=tk.W, padx=5, pady=3)
         row += 1
@@ -913,7 +973,7 @@ class ProductFeaturesApp:
             ('Platform', 'Vehicle platforms supported by the system'),
             ('ODD', 'Operational Design Domains'),
             ('Environment', 'Deployment environments'),
-            ('Trailer', 'Trailer types and configurations'),
+            ('Cargo', 'Cargo types and configurations'),
             ('TRL', 'Technology Readiness Levels')
         ]
         
@@ -1168,6 +1228,20 @@ class ProductFeaturesApp:
         configs = self.db.get_configurations(config_type)
         return [c['code'] for c in configs]
     
+    def refresh_owner_dropdowns(self):
+        """Refresh all owner dropdown values with latest owners."""
+        owners = [''] + self.db.get_unique_owners()
+        
+        # Update all form owner comboboxes
+        if hasattr(self, 'pv_form') and 'owner' in self.pv_form:
+            self.pv_form['owner']['values'] = owners
+        if hasattr(self, 'pf_form') and 'owner' in self.pf_form:
+            self.pf_form['owner']['values'] = owners
+        if hasattr(self, 'cap_form') and 'owner' in self.cap_form:
+            self.cap_form['owner']['values'] = owners
+        if hasattr(self, 'tf_form') and 'owner' in self.tf_form:
+            self.tf_form['owner']['values'] = owners
+    
     def get_swimlanes(self):
         """Get unique swimlanes from all entities."""
         swimlanes = set()
@@ -1321,6 +1395,13 @@ class ProductFeaturesApp:
                 widget.delete('1.0', tk.END)
                 if pf.get(field_name):
                     widget.insert('1.0', pf[field_name])
+            elif field_name == 'product_variants':
+                # Multi-select: clear and select all associated variants
+                widget.selection_clear(0, tk.END)
+                associated = [pv['label'] for pv in self.db.get_pf_product_variants(self.current_pf_id)]
+                for i in range(widget.size()):
+                    if widget.get(i) in associated:
+                        widget.selection_set(i)
             else:
                 widget.delete(0, tk.END)
                 if pf.get(field_name):
@@ -1342,6 +1423,8 @@ class ProductFeaturesApp:
         data = {}
         text_fields = ['details', 'comments']
         for field_name, widget in self.pf_form.items():
+            if field_name == 'product_variants':
+                continue  # handled separately
             if field_name in text_fields:
                 data[field_name] = widget.get('1.0', tk.END).strip()
             else:
@@ -1349,8 +1432,21 @@ class ProductFeaturesApp:
         
         try:
             self.db.update_product_feature(self.current_pf_id, data)
+            # Link all selected Product Variants
+            selected_indices = self.pf_form['product_variants'].curselection()
+            selected_labels = [self.pf_form['product_variants'].get(i) for i in selected_indices]
+            # Unlink all existing associations first
+            for pv in self.db.get_pf_product_variants(self.current_pf_id):
+                self.db.unlink_pv_pf(pv['id'], self.current_pf_id)
+            # Link selected variants
+            for pv_label in selected_labels:
+                pv = self.db.get_product_variant_by_label(pv_label)
+                if pv:
+                    self.db.link_pv_pf(pv['id'], self.current_pf_id)
             messagebox.showinfo("Success", "Product Feature updated successfully!")
+            self.refresh_owner_dropdowns()
             self.load_product_features()
+            self.load_product_variants()
         except Exception as e:
             messagebox.showerror("Error", f"Failed to update: {str(e)}")
     
@@ -1367,21 +1463,29 @@ class ProductFeaturesApp:
         fields = [
             ('label', 'Label*:', 30),
             ('name', 'Name*:', 40),
-            ('platform', 'Platform:', 30)
+            ('platform', 'Platform:', 30),
+            ('owner', 'Owner:', 30),
+            ('url', 'URL:', 40)
         ]
         
         for field_name, label_text, width in fields:
             ttk.Label(dialog, text=label_text).grid(row=row, column=0, sticky=tk.W, padx=10, pady=5)
-            entry = ttk.Entry(dialog, width=width)
-            entry.grid(row=row, column=1, sticky=tk.W, padx=10, pady=5)
-            form[field_name] = entry
+            if field_name == 'owner':
+                widget = ttk.Combobox(dialog, width=width)
+                widget['values'] = [''] + self.db.get_unique_owners()
+            else:
+                widget = ttk.Entry(dialog, width=width)
+            widget.grid(row=row, column=1, sticky=tk.W, padx=10, pady=5)
+            form[field_name] = widget
             row += 1
         
         def save_new():
             data = {
                 'label': form['label'].get().strip(),
                 'name': form['name'].get().strip(),
-                'platform': form['platform'].get().strip() or None
+                'platform': form['platform'].get().strip() or None,
+                'owner': form['owner'].get().strip() or None,
+                'url': form['url'].get().strip() or None
             }
             
             if not data['label'] or not data['name']:
@@ -1392,7 +1496,9 @@ class ProductFeaturesApp:
                 self.db.add_product_feature(data)
                 messagebox.showinfo("Success", "Product Feature added successfully!")
                 dialog.destroy()
+                self.refresh_owner_dropdowns()
                 self.load_product_features()
+                self.load_product_variants()
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to add: {str(e)}")
         
@@ -1410,6 +1516,7 @@ class ProductFeaturesApp:
                 messagebox.showinfo("Success", "Product Feature deleted successfully!")
                 self.current_pf_id = None
                 self.load_product_features()
+                self.load_product_variants()
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to delete: {str(e)}")
     
@@ -1461,6 +1568,9 @@ class ProductFeaturesApp:
         self.pv_form['environment'].set(pv['environment'] or '')
         self.pv_form['trailer'].set(pv['trailer'] or '')
         self.pv_form['trl'].set(pv['trl'] or '')
+        self.pv_form['owner'].set(pv.get('owner') or '')
+        self.pv_form['url'].delete(0, tk.END)
+        self.pv_form['url'].insert(0, pv.get('url') or '')
         
         self.pv_form['description'].delete('1.0', tk.END)
         if pv['description']:
@@ -1494,7 +1604,9 @@ class ProductFeaturesApp:
             'environment': self.pv_form['environment'].get() or None,
             'trailer': self.pv_form['trailer'].get() or None,
             'trl': self.pv_form['trl'].get() or None,
-            'due_date': self.pv_form['due_date'].get()
+            'due_date': self.pv_form['due_date'].get(),
+            'owner': self.pv_form['owner'].get() or None,
+            'url': self.pv_form['url'].get() or None
         }
         
         try:
@@ -1506,6 +1618,7 @@ class ProductFeaturesApp:
                 self.current_pv_id = pv_id
                 messagebox.showinfo("Success", "Product Variant created successfully!")
             
+            self.refresh_owner_dropdowns()
             self.load_product_variants()
         except Exception as e:
             messagebox.showerror("Error", f"Failed to save: {str(e)}")
@@ -1644,7 +1757,7 @@ class ProductFeaturesApp:
                 if pf.get('environment'):
                     md_content.append(f"- Environment: {pf['environment']}\n")
                 if pf.get('trailer'):
-                    md_content.append(f"- Trailer: {pf['trailer']}\n")
+                    md_content.append(f"- Cargo: {pf['trailer']}\n")
                 md_content.append("\n")
                 
                 # Dependent Capabilities
@@ -2218,6 +2331,7 @@ class ProductFeaturesApp:
         try:
             self.db.update_capability(self.current_cap_id, data)
             messagebox.showinfo("Success", "Capability updated successfully!")
+            self.refresh_owner_dropdowns()
             self.load_capabilities()
         except Exception as e:
             messagebox.showerror("Error", f"Failed to update: {str(e)}")
@@ -2226,25 +2340,31 @@ class ProductFeaturesApp:
         """Add new capability."""
         dialog = tk.Toplevel(self.root)
         dialog.title("Add New Capability")
-        dialog.geometry("500x300")
+        dialog.geometry("500x350")
         
         form = {}
         row = 0
         
-        fields = [('label', 'Label*:', 30), ('name', 'Name*:', 40), ('swimlane', 'Swimlane:', 30)]
+        fields = [('label', 'Label*:', 30), ('name', 'Name*:', 40), ('swimlane', 'Swimlane:', 30), ('owner', 'Owner:', 30), ('url', 'URL:', 40)]
         
         for field_name, label_text, width in fields:
             ttk.Label(dialog, text=label_text).grid(row=row, column=0, sticky=tk.W, padx=10, pady=5)
-            entry = ttk.Entry(dialog, width=width)
-            entry.grid(row=row, column=1, sticky=tk.W, padx=10, pady=5)
-            form[field_name] = entry
+            if field_name == 'owner':
+                widget = ttk.Combobox(dialog, width=width)
+                widget['values'] = [''] + self.db.get_unique_owners()
+            else:
+                widget = ttk.Entry(dialog, width=width)
+            widget.grid(row=row, column=1, sticky=tk.W, padx=10, pady=5)
+            form[field_name] = widget
             row += 1
         
         def save_new():
             data = {
                 'label': form['label'].get().strip(),
                 'name': form['name'].get().strip(),
-                'swimlane': form['swimlane'].get().strip() or None
+                'swimlane': form['swimlane'].get().strip() or None,
+                'owner': form['owner'].get().strip() or None,
+                'url': form['url'].get().strip() or None
             }
             
             if not data['label'] or not data['name']:
@@ -2255,6 +2375,7 @@ class ProductFeaturesApp:
                 self.db.add_capability(data)
                 messagebox.showinfo("Success", "Capability added successfully!")
                 dialog.destroy()
+                self.refresh_owner_dropdowns()
                 self.load_capabilities()
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to add: {str(e)}")
@@ -2518,6 +2639,7 @@ class ProductFeaturesApp:
         try:
             self.db.update_technical_function(self.current_tf_id, data)
             messagebox.showinfo("Success", "Technical Function updated successfully!")
+            self.refresh_owner_dropdowns()
             self.load_technical_functions()
         except Exception as e:
             messagebox.showerror("Error", f"Failed to update: {str(e)}")
@@ -2526,25 +2648,31 @@ class ProductFeaturesApp:
         """Add new technical function."""
         dialog = tk.Toplevel(self.root)
         dialog.title("Add New Technical Function")
-        dialog.geometry("500x300")
+        dialog.geometry("500x350")
         
         form = {}
         row = 0
         
-        fields = [('label', 'Label*:', 30), ('name', 'Name*:', 40), ('swimlane', 'Swimlane:', 30)]
+        fields = [('label', 'Label*:', 30), ('name', 'Name*:', 40), ('swimlane', 'Swimlane:', 30), ('owner', 'Owner:', 30), ('url', 'URL:', 40)]
         
         for field_name, label_text, width in fields:
             ttk.Label(dialog, text=label_text).grid(row=row, column=0, sticky=tk.W, padx=10, pady=5)
-            entry = ttk.Entry(dialog, width=width)
-            entry.grid(row=row, column=1, sticky=tk.W, padx=10, pady=5)
-            form[field_name] = entry
+            if field_name == 'owner':
+                widget = ttk.Combobox(dialog, width=width)
+                widget['values'] = [''] + self.db.get_unique_owners()
+            else:
+                widget = ttk.Entry(dialog, width=width)
+            widget.grid(row=row, column=1, sticky=tk.W, padx=10, pady=5)
+            form[field_name] = widget
             row += 1
         
         def save_new():
             data = {
                 'label': form['label'].get().strip(),
                 'name': form['name'].get().strip(),
-                'swimlane': form['swimlane'].get().strip() or None
+                'swimlane': form['swimlane'].get().strip() or None,
+                'owner': form['owner'].get().strip() or None,
+                'url': form['url'].get().strip() or None
             }
             
             if not data['label'] or not data['name']:
@@ -2555,6 +2683,7 @@ class ProductFeaturesApp:
                 self.db.add_technical_function(data)
                 messagebox.showinfo("Success", "Technical Function added successfully!")
                 dialog.destroy()
+                self.refresh_owner_dropdowns()
                 self.load_technical_functions()
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to add: {str(e)}")
@@ -4360,7 +4489,7 @@ class ProductFeaturesApp:
                 export_data['technical_functions'].append(tf)
             
             # Export Configurations
-            for config_type in ['Platform', 'ODD', 'Environment', 'Trailer', 'TRL']:
+            for config_type in ['Platform', 'ODD', 'Environment', 'Cargo', 'TRL']:
                 configs = self.db.get_configurations(config_type)
                 for config in configs:
                     export_data['configurations'].append(config)
