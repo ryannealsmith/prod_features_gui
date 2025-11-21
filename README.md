@@ -92,9 +92,6 @@ source .venv/bin/activate
 # Install dependencies
 pip install -r requirements.txt
 
-# Import data
-python import_data.py
-
 # Run application
 python app.py
 ```
